@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Fala Pavão — notícias de Vila Pavão</title>
+<meta name="description" content="Notícias hiperlocais de Vila Pavão, a Cidade Pomerana." />
+
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="theme-color" content="#0095F6" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Fala Pavão" />
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="install-banner" class="fp-install-banner">
+  <span>Instale o Fala Pavão no seu celular</span>
+  <button onclick="installApp()">Instalar</button>
+  <button class="fp-install-dismiss" onclick="dismissInstall()" aria-label="Fechar">&times;</button>
+</div>
+
+<div id="app"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
