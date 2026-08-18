@@ -125,7 +125,7 @@ function render() {
   const coverHtml =
     state.tab === "todas"
       ? `<div class="fp-cover">
-          <img src="icons/logo-falapavao.png" alt="Fala Pavão Notícias" />
+          <img src="icons/logo-pavv.png" alt="Fala Pavão Notícias" />
         </div>`
       : "";
 
