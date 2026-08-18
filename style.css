@@ -252,7 +252,6 @@ body {
   white-space: nowrap;
 
   background: var(--azul-forte);
-  border-bottom: none;
 }
 
 .fp-ticker-track {
@@ -293,13 +292,19 @@ body {
 ========================= */
 
 .fp-feed {
+  width: 100%;
+  max-width: 760px;
+
+  margin: 0 auto;
+
   padding: 22px 20px 100px;
 
   display: grid;
-
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 
   gap: 16px;
+
+  flex: 1;
 }
 
 /* =========================
@@ -308,6 +313,8 @@ body {
 
 .fp-card {
   position: relative;
+
+  width: 100%;
 
   margin: 0;
   padding: 18px;
@@ -493,8 +500,6 @@ body {
 ========================= */
 
 .fp-empty {
-  grid-column: 1 / -1;
-
   padding: 50px 20px;
 
   text-align: center;
@@ -509,8 +514,6 @@ body {
 ========================= */
 
 .fp-soon {
-  grid-column: 1 / -1;
-
   padding: 60px 20px;
 
   text-align: center;
@@ -671,7 +674,7 @@ body {
 }
 
 /* =========================
-   TABLETS
+   TABLETS E CELULARES
 ========================= */
 
 @media (max-width: 760px) {
@@ -681,12 +684,9 @@ body {
   }
 
   .fp-feed {
-    grid-template-columns: 1fr;
-
-    padding:
-      14px
-      12px
-      90px;
+    max-width: 100%;
+    padding: 14px 12px 90px;
+    gap: 12px;
   }
 
   .fp-card {
@@ -717,7 +717,6 @@ body {
 @media (max-width: 420px) {
   .fp-header {
     min-height: 61px;
-
     padding: 8px 10px;
   }
 
@@ -734,6 +733,10 @@ body {
     font-size: 8px;
   }
 
+  .fp-followers {
+    padding: 11px 12px;
+  }
+
   .fp-followers-count {
     font-size: 27px;
   }
@@ -744,9 +747,7 @@ body {
 
   .fp-followers-cta {
     margin-top: 8px;
-
     padding: 6px 13px;
-
     font-size: 11px;
   }
 
@@ -766,19 +767,14 @@ body {
     font-size: 10px;
   }
 
-  .fp-feed 
-  padding: 22px 20px 100px;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  max-width: 760px;
-  margin: 0 auto;
-
+  .fp-feed {
+    max-width: 100%;
+    padding: 11px 10px 85px;
+    gap: 11px;
   }
 
   .fp-card {
     padding: 13px;
-
     border-radius: 10px;
   }
 
@@ -804,3 +800,4 @@ body {
     font-size: 9px;
   }
 }
+
