@@ -60,14 +60,14 @@ const ICONS = {
   feather: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>',
   gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>',
 };
-
 const TABS = [
-  { id: "todas", label: "Todas", icon: "home" },
+  { id: "todas", label: "Início", icon: "home" },
   { id: "urgente", label: "Urgente", icon: "alert" },
-  { id: "cidade", label: "Cidade", icon: "building" },
-  { id: "pomitafro", label: "Pomitafro", icon: "feather" },
-  { id: "produtos", label: "Produtos", icon: "gift" },
+  { id: "cidade", label: "Vila Pavão", icon: "building" },
+  { id: "pomitafro", label: "Cultura", icon: "feather" },
+  { id: "produtos", label: "Mais", icon: "gift" },
 ];
+
 
 let state = {
   tab: "todas",
