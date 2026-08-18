@@ -5,7 +5,7 @@ const SHEET_CSV_URL = "";
 // URL de uma planilha (ou célula publicada) com o número de seguidores atual.
 // Configure um segundo destino no Windsor.ai exportando só "followers_count"
 // e cole aqui o link CSV publicado para o contador atualizar sozinho.
-const FOLLOWERS_CSV_URL = "https://docs.google.com/spreadsheets/d/15lEQwcynEYbdrDdkHC-P3hX-sMXrb2J4VVv4BWCVe0g/export?format=csv&gid=0";
+const FOLLOWERS_CSV_URL = "https://docs.google.com/spreadsheets/d/15lEQwcynEYbdrDdkHC-P3hX-sMXrb2J4VVv4BWCVe0g/export?format=csv&gid=2";
 const FALLBACK_FOLLOWERS = 9000;
 const FOLLOWERS_GOAL = 10000;
 
