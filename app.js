@@ -62,7 +62,7 @@ const ICONS = {
 };
 const TABS = [
   { id: "todas", label: "Início", icon: "home" },
-  { id: "urgente", label: "Urgente", icon: "alert" },
+  { id: "urgente", label: "Urjente", icon: "alert" },
   { id: "cidade", label: "Vila Pavão", icon: "building" },
   { id: "pomitafro", label: "Cultura", icon: "feather" },
   { id: "produtos", label: "Mais", icon: "gift" },
