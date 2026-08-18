@@ -3,7 +3,7 @@ const CACHE_NAME = "fala-pavao-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./estilo.css",
+  "./style.css",
   "./app.js",
   "./manifest.json",
   "./icons/icon-192.png",
