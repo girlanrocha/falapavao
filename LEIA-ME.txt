@@ -1,0 +1,7 @@
+FALA PAVÃO - NOVO LAYOUT
+
+1. Substitua no GitHub: index.html, app.js, style.css, manifest.json, service-worker.js e wrangler.jsonc.
+2. Envie a pasta icons com pavv.png, icon-192.png e icon-512.png.
+3. No app.js, no topo, preencha LINKS.whatsapp, enviarNoticia, mercadoLivre, shopee, tiktok e anunciar.
+4. INSTAGRAM_API_URL fica vazio por enquanto. Quando a API oficial Meta/Instagram + Cloudflare estiver pronta, basta colocar a URL do Worker ali. O site já está preparado para trocar o conteúdo local pelos posts automáticos.
+5. A brincadeira 'O que tem na caixa?' envia o visitante somente para o Instagram; nenhuma resposta é guardada no site.
