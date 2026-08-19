@@ -1,0 +1,31 @@
+FALA PAVÃO V4
+
+ALTERAÇÕES
+- Nova faixa de anúncio azul logo abaixo do cabeçalho.
+- Ofertas do Dia acima da notícia principal.
+- Notícia principal reduzida para deixar "O que tem na caixa?" mais visível.
+- Destaque alterna automaticamente a cada 8 segundos entre Instagram e notícias regionais.
+- Página administrativa: /admin.html
+- Ofertas e anúncios podem ser alterados no painel sem editar app.js.
+
+ARQUIVOS PARA SUBSTITUIR/ADICIONAR
+public/app.js
+public/style.css
+public/service-worker.js
+public/admin.html
+src/index.js
+
+CONFIGURAÇÃO DO PAINEL ADMINISTRATIVO NA CLOUDFLARE
+1. Crie um namespace KV no painel Cloudflare.
+2. No Worker falapavao, adicione um binding KV com o nome exato: CONTENT
+3. Em Variáveis e segredos, crie:
+   ADMIN_USER = seu usuário
+   ADMIN_PASSWORD = sua senha
+   ADMIN_SESSION_SECRET = uma sequência longa e aleatória (mínimo 32 caracteres)
+4. Promova/implante a nova versão.
+5. Abra https://falapavao.com/admin.html
+
+Atenção: não coloque usuário/senha dentro do GitHub.
+
+NOTÍCIAS REGIONAIS
+O Worker consulta automaticamente o feed RSS público da A Gazeta e intercala os itens com as publicações do Instagram.
