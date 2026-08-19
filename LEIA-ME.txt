@@ -1,7 +1,25 @@
-FALA PAVÃO - NOVO LAYOUT
+FALA PAVÃO — APP V2
 
-1. Substitua no GitHub: index.html, app.js, style.css, manifest.json, service-worker.js e wrangler.jsonc.
-2. Envie a pasta icons com pavv.png, icon-192.png e icon-512.png.
-3. No app.js, no topo, preencha LINKS.whatsapp, enviarNoticia, mercadoLivre, shopee, tiktok e anunciar.
-4. INSTAGRAM_API_URL fica vazio por enquanto. Quando a API oficial Meta/Instagram + Cloudflare estiver pronta, basta colocar a URL do Worker ali. O site já está preparado para trocar o conteúdo local pelos posts automáticos.
-5. A brincadeira 'O que tem na caixa?' envia o visitante somente para o Instagram; nenhuma resposta é guardada no site.
+Esta versão aproxima o portal do desenho aprovado:
+- logo grande e compacta no cabeçalho, nas cores da marca;
+- faixa de últimas notícias mais lenta;
+- categorias no topo;
+- destaque principal estilo app;
+- carrossel “Últimas do Instagram”;
+- “O que tem na caixa?” com respostas somente no Instagram;
+- WhatsApp e Envie sua notícia;
+- Ofertas do Dia: Mercado Livre, Shopee e TikTok Shop;
+- banner “Anuncie Aqui”;
+- menu inferior estilo aplicativo;
+- busca e menu lateral funcionais;
+- PWA Android e instrução de instalação para iPhone.
+
+PARA PUBLICAR:
+1. No GitHub, envie/substitua index.html, app.js, style.css, service-worker.js, manifest.json, wrangler.jsonc e a pasta icons.
+2. Faça o commit.
+3. Aguarde a Cloudflare publicar.
+4. Reabra o site e faça uma atualização forçada se necessário.
+
+CONFIGURAÇÕES:
+No começo do app.js, preencha LINKS.whatsapp, LINKS.enviarNoticia, LINKS.mercadoLivre, LINKS.shopee, LINKS.tiktok e LINKS.anunciar.
+Quando a API oficial do Instagram estiver pronta, preencha INSTAGRAM_API_URL.
