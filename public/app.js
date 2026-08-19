@@ -473,7 +473,7 @@ function render() {
   <main>
 
 
-    <section class="hero">
+    <section class="hero" onclick="go('${esc(hero.link || INSTAGRAM_PROFILE)}')" style="cursor:pointer">
 
       <div class="hero-img">
 
