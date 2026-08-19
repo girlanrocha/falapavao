@@ -1,0 +1,17 @@
+FALA PAVÃO V3.1 — INSTAGRAM AUTOMÁTICO
+
+Este pacote transforma o projeto em Cloudflare Worker + site estático.
+
+NÃO coloque o token do Instagram no GitHub.
+
+Depois do upload e da implantação:
+Cloudflare > Workers e Pages > falapavao > Configurações > Variáveis e segredos > Adicionar
+Tipo: Segredo
+Nome: INSTAGRAM_TOKEN
+Valor: cole o token gerado pela Meta
+Salve/Implante.
+
+Teste:
+abra /api/instagram no endereço do site.
+Se aparecer JSON com "data", a integração está funcionando.
+O portal consulta novas publicações a cada 5 minutos.
