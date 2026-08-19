@@ -252,7 +252,7 @@ function render(){
 
     <main>
       <section class="section offers top-offers">
-        <div class="section-head"><h2>◇ OFERTAS DO DIA</h2><a href="/admin.html">GERENCIAR ›</a></div>
+        <div class="section-head"><h2>◇ OFERTAS DO DIA</h2></div>
         <div class="offer-grid">${offers.map(offerHtml).join("")}</div>
       </section>
 
