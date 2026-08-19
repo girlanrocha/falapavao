@@ -1,0 +1,8 @@
+FALA PAVÃO V3
+Visual mobile-first inspirado no mockup aprovado.
+1. Envie todos estes arquivos ao repositório GitHub falapavao.
+2. Faça Commit changes.
+3. Aguarde a Cloudflare implantar.
+4. Se vir versão antiga: Ctrl+Shift+R ou limpe dados do site/PWA.
+Links reais: edite no início de app.js as constantes WHATSAPP_URL, MERCADO_LIVRE_URL, SHOPEE_URL e TIKTOK_SHOP_URL.
+As imagens das notícias são placeholders até ligarmos a API oficial do Instagram.

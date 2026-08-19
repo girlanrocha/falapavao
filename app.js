@@ -1,413 +1,112 @@
-// ===============================
-// FALA PAVÃO — APP V2
-// ===============================
-// Quando criarmos a API oficial do Instagram na Cloudflare,
-// cole a URL do Worker abaixo. O Worker deve retornar:
-// { data: [{id, caption, permalink, timestamp, media_url, thumbnail_url, media_type}] }
-const INSTAGRAM_API_URL = "";
-
-// Preencha estes links quando quiser ativá-los.
-const LINKS = {
-  instagram: "https://www.instagram.com/falapavao/",
-  whatsapp: "",
-  enviarNoticia: "",
-  mercadoLivre: "",
-  shopee: "",
-  tiktok: "",
-  anunciar: ""
-};
-
-const CATS = [
-  { id: "todas", label: "Todas", icon: "⌂" },
-  { id: "urgente", label: "Urgente", icon: "🚨" },
-  { id: "cidade", label: "Vila Pavão", icon: "📍" },
-  { id: "regiao", label: "Região", icon: "🌐" },
-  { id: "policia", label: "Polícia", icon: "🛡" },
-  { id: "cultura", label: "Cultura", icon: "♫" },
-  { id: "esporte", label: "Esporte", icon: "⚽" }
-];
+// Fala Pavão V3 — mobile-first
+const INSTAGRAM_PROFILE = "https://www.instagram.com/falapavao/";
+const WHATSAPP_URL = ""; // cole aqui: https://wa.me/55DDDNUMERO
+const MERCADO_LIVRE_URL = "";
+const SHOPEE_URL = "";
+const TIKTOK_SHOP_URL = "";
 
 let ARTICLES = [
-  { id:"1", cat:"urgente", title:"PM morre baleado durante ocorrência em Cachoeiro de Itapemirim", dek:"Confira os detalhes completos na publicação do Fala Pavão.", time:"há 12 h", link:"https://www.instagram.com/reel/DcFD0TIRyPN/", image:"" },
-  { id:"2", cat:"urgente", title:"Temporal com granizo causa estragos em Ibituba, zona rural de Baixo Guandu", dek:"Chuva forte veio acompanhada de rajadas de vento no Noroeste do ES.", time:"há 23 h", link:"https://www.instagram.com/reel/DcD7DKVtDct/", image:"" },
-  { id:"3", cat:"policia", title:"Briga entre mulheres termina em tentativa de homicídio em Boa Esperança", dek:"Veja as informações publicadas pelo Fala Pavão no Instagram.", time:"ontem", link:"https://www.instagram.com/reel/DcBa1R1NXZT/", image:"" },
-  { id:"4", cat:"regiao", title:"Dois jovens morrem em batida de moto contra caminhão na BR-259", dek:"Acidente aconteceu em Mascarenhas, zona rural de Baixo Guandu.", time:"há 5 dias", link:"https://www.instagram.com/reel/Db4-3wyNQyI/", image:"" },
-  { id:"5", cat:"cidade", title:"Ventos fortes derrubam árvores em estradas rurais de Vila Pavão", dek:"Atenção redobrada para quem trafega pelas vias rurais.", time:"há 6 dias", link:"https://www.instagram.com/reel/Db2wBXJt13R/", image:"" },
-  { id:"6", cat:"cultura", title:"27ª Pomitafro movimenta Vila Pavão com cultura e gastronomia", dek:"Tradições pomerana, italiana e afro-brasileira em destaque.", time:"há 1 sem", link:"https://www.instagram.com/falapavao/", image:"" }
+  {id:"1",cat:"urgente",title:"PM morre baleado durante ocorrência em Cachoeiro de Itapemirim",dek:"Confira os detalhes completos na publicação do Fala Pavão.",time:"há 12 h",link:"https://www.instagram.com/reel/DcFD0TIRyPN/"},
+  {id:"2",cat:"urgente",title:"Temporal com granizo causa estragos em Ibituba, zona rural de Baixo Guandu",dek:"Chuva forte veio acompanhada de rajadas de vento no Noroeste do ES.",time:"há 23 h",link:"https://www.instagram.com/reel/DcD7DKVtDct/"},
+  {id:"3",cat:"policia",title:"Briga entre mulheres termina em tentativa de homicídio em Boa Esperança",dek:"Veja as informações publicadas pelo Fala Pavão no Instagram.",time:"ontem",link:"https://www.instagram.com/reel/DcBa1R1NXZT/"},
+  {id:"4",cat:"regiao",title:"Dois jovens morrem em batida de moto contra caminhão na BR-259",dek:"Acidente aconteceu em Mascarenhas, zona rural de Baixo Guandu.",time:"há 5 dias",link:"https://www.instagram.com/reel/Db4-3wyNQyI/"},
+  {id:"5",cat:"cidade",title:"Ventos fortes derrubam árvores em estradas rurais de Vila Pavão",dek:"Atenção redobrada para quem trafega pelas vias rurais.",time:"há 6 dias",link:"https://www.instagram.com/reel/Db2wBXJt13R/"},
+  {id:"6",cat:"cultura",title:"27ª Pomitafro movimenta Vila Pavão com cultura e gastronomia",dek:"Tradições pomerana, italiana e afro-brasileira em destaque.",time:"há 1 sem",link:"https://www.instagram.com/falapavao/"}
 ];
 
-let activeCat = "todas";
-let searchTerm = "";
-let menuOpen = false;
-let searchOpen = false;
+const CATS = [
+  ["todas","⌂","TODAS"],["urgente","🚨","URGENTE"],["cidade","📍","CIDADE"],
+  ["regiao","🌐","REGIÃO"],["policia","🛡","POLÍCIA"],["cultura","♫","CULTURA"],["esporte","⚽","ESPORTE"]
+];
+let state={tab:"todas"};
 
-function safeLink(url, fallback = LINKS.instagram) {
-  return url && url.trim() ? url : fallback;
+function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function setTab(id){state.tab=id;render();}
+function go(url){ if(url) window.open(url,"_blank","noopener"); }
+
+function normalizeCats(){
+  ARTICLES=ARTICLES.map((a,i)=>{
+    let cat=a.cat||"cidade";
+    if(cat==="pomitafro") cat="cultura";
+    return {...a,cat, image:a.image||""};
+  });
+}
+normalizeCats();
+
+function newsImage(a,i){
+  if(a.image) return `<img src="${esc(a.image)}" alt="">`;
+  return `<div class="photo-fallback"><img src="icons/pavv.png" alt="Fala Pavão"></div>`;
 }
 
-function escapeHtml(s = "") {
-  return String(s).replace(/[&<>'"]/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
-  }[c]));
+function render(){
+ const root=document.getElementById("app");
+ let feed=state.tab==="todas"?ARTICLES:ARTICLES.filter(a=>a.cat===state.tab);
+ if(!feed.length) feed=ARTICLES;
+ const hero=feed[0]||ARTICLES[0];
+ const reels=ARTICLES.slice(0,5);
+ root.innerHTML=`
+ <header class="top">
+   <button class="circle" onclick="document.body.classList.toggle('menu-open')" aria-label="Menu">☰</button>
+   <div class="brand"><img src="icons/pavv.png" alt="@falapavao notícias"><small>VILA PAVÃO · ES E REGIÃO</small></div>
+   <button class="circle" onclick="document.getElementById('busca').focus()" aria-label="Buscar">⌕</button>
+ </header>
+
+ <div class="breaking"><b>⚡ ÚLTIMAS</b><div class="marquee"><div>${[...ARTICLES,...ARTICLES].map(a=>`<span>URGENTE: ${esc(a.title)} <i>●</i></span>`).join("")}</div></div></div>
+
+ <nav class="cats">${CATS.map(c=>`<button class="${state.tab===c[0]?"active":""}" onclick="setTab('${c[0]}')"><span>${c[1]}</span>${c[2]}</button>`).join("")}</nav>
+
+ <main>
+   <section class="hero">
+      <div class="hero-img">${newsImage(hero,0)}</div>
+      <div class="hero-copy"><span class="urgent">URGENTE ⚡</span><h1>${esc(hero.title)}</h1><small>${esc(hero.time||"Agora")}</small>
+      <a href="${esc(hero.link||INSTAGRAM_PROFILE)}" target="_blank" rel="noopener">VER NO INSTAGRAM ◎</a></div>
+   </section>
+
+   <section class="section">
+     <div class="section-head"><h2>▣ ÚLTIMAS DO INSTAGRAM</h2><a href="${INSTAGRAM_PROFILE}" target="_blank">VER TODOS ›</a></div>
+     <div class="reels">${reels.map((a,i)=>`<a class="reel" href="${esc(a.link||INSTAGRAM_PROFILE)}" target="_blank"><div class="reel-img">${newsImage(a,i)}<b>▶</b><em>${["0:29","0:45","0:32","0:28","0:31"][i]}</em></div><strong>${esc(a.title)}</strong><small>${esc(a.time||"")}</small></a>`).join("")}</div>
+   </section>
+
+   <section class="boxgame" onclick="go(INSTAGRAM_PROFILE)">
+      <div class="gift">🎁<b>?</b></div><h2>O QUE TEM<br><mark>NA CAIXA?</mark></h2>
+      <div class="gamecopy"><p>Acerte o que tem dentro da caixa e concorra a um prêmio especial!</p><button>PARTICIPAR AGORA</button></div>
+      <div class="iganswer">🎁<small>Responda somente<br>no Instagram</small></div>
+   </section>
+
+   <section class="quick">
+     <button onclick="go(WHATSAPP_URL)"><b class="wa">☎</b><span><strong>Fale com o Fala Pavão</strong><small>Clique e fale no WhatsApp</small></span><i>›</i></button>
+     <button onclick="go(WHATSAPP_URL)"><b class="cam">▣</b><span><strong>Envie sua notícia</strong><small>Mande fotos, vídeos e denúncias</small></span><i>›</i></button>
+   </section>
+
+   <section class="section offers">
+    <div class="section-head"><h2>◇ OFERTAS DO DIA</h2><span>VER TODAS ›</span></div>
+    <div class="offer-grid">
+      <button onclick="go(MERCADO_LIVRE_URL)" class="ml"><strong>mercado<br>livre</strong><small>Ofertas imperdíveis</small><b>VER OFERTAS</b></button>
+      <button onclick="go(SHOPEE_URL)" class="sh"><strong>▣ Shopee</strong><small>Cupons e descontos</small><b>VER OFERTAS</b></button>
+      <button onclick="go(TIKTOK_SHOP_URL)" class="tt"><strong>♪ TikTok Shop</strong><small>Promoções exclusivas</small><b>VER OFERTAS</b></button>
+    </div>
+   </section>
+
+   <section class="advert"><span>📣</span><h2>ANUNCIE AQUI!</h2><p>Divulgue sua marca no Fala Pavão<br>Seja visto por milhares de pessoas!</p><button onclick="go(WHATSAPP_URL)">FALE CONOSCO</button></section>
+ </main>
+
+ <div class="searchbox"><input id="busca" placeholder="Buscar notícia..." oninput="searchNews(this.value)"><button onclick="document.body.classList.remove('searching')">×</button></div>
+
+ <nav class="bottom">
+  <button onclick="setTab('todas')">⌂<small>INÍCIO</small></button>
+  <button onclick="setTab('cidade')">▤<small>NOTÍCIAS</small></button>
+  <button onclick="document.querySelector('.boxgame').scrollIntoView({behavior:'smooth'})">🎁<small>CAIXA</small></button>
+  <button onclick="document.querySelector('.offers').scrollIntoView({behavior:'smooth'})">◇<small>OFERTAS</small></button>
+  <button onclick="go(WHATSAPP_URL)">◉<small>WHATSAPP</small></button>
+ </nav>`;
 }
 
-function splitCaption(caption = "") {
-  const clean = caption.replace(/\s*#[\wÀ-ú]+/g, "").trim();
-  const cut = clean.search(/[.!?\n]/);
-  let title = cut > 0 ? clean.slice(0, cut + 1) : clean.slice(0, 100);
-  let dek = cut > 0 ? clean.slice(cut + 1).trim() : "";
-  title = title.replace(/[.!?]$/, "").trim();
-  if (title.length > 105) title = title.slice(0, 102) + "…";
-  if (!dek) dek = "Confira os detalhes completos no Instagram do Fala Pavão.";
-  if (dek.length > 180) dek = dek.slice(0, 177) + "…";
-  return { title, dek };
+function searchNews(q){
+ document.body.classList.add("searching");
+ q=q.toLowerCase().trim();
+ if(!q){render();return}
+ const old=ARTICLES; ARTICLES=old.filter(a=>(a.title+" "+(a.dek||"")).toLowerCase().includes(q)); render(); ARTICLES=old;
 }
-
-function relativeTime(iso) {
-  const d = new Date(iso);
-  if (isNaN(d)) return "agora";
-  const m = Math.max(1, Math.floor((Date.now() - d) / 60000));
-  if (m < 60) return `há ${m} min`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `há ${h} h`;
-  const days = Math.floor(h / 24);
-  if (days === 1) return "ontem";
-  if (days < 7) return `há ${days} dias`;
-  return `há ${Math.floor(days / 7)} sem`;
-}
-
-function categorize(text = "") {
-  const t = text.toLowerCase();
-  if (["urgente", "acidente", "morre", "morte", "ferido", "temporal", "alerta", "resgate"].some(k => t.includes(k))) return "urgente";
-  if (["polícia", "policia", "preso", "prisão", "crime", "assalto", "operação"].some(k => t.includes(k))) return "policia";
-  if (["pomitafro", "cultura", "pomeran", "festa", "show", "evento"].some(k => t.includes(k))) return "cultura";
-  if (["vila pavão", "vila pavao"].some(k => t.includes(k))) return "cidade";
-  return "regiao";
-}
-
-function normalizeMedia(m) {
-  const caption = m.caption || "";
-  const { title, dek } = splitCaption(caption);
-  return {
-    id: String(m.id || Math.random()),
-    cat: categorize(caption),
-    title,
-    dek,
-    time: relativeTime(m.timestamp),
-    link: m.permalink || LINKS.instagram,
-    image: m.thumbnail_url || m.media_url || ""
-  };
-}
-
-function filterArticles() {
-  let list = activeCat === "todas" ? ARTICLES : ARTICLES.filter(a => a.cat === activeCat);
-  if (searchTerm) {
-    const q = searchTerm.toLowerCase();
-    list = list.filter(a => `${a.title} ${a.dek}`.toLowerCase().includes(q));
-  }
-  return list;
-}
-
-function categoryLabel(cat) {
-  return CATS.find(c => c.id === cat)?.label || cat;
-}
-
-function newsCard(a) {
-  return `
-    <article class="news-card ${a.cat === "urgente" ? "urgent" : ""}">
-      <div class="news-card-row">
-        <div class="news-thumb ${a.image ? "has-image" : ""}">
-          ${a.image ? `<img src="${escapeHtml(a.image)}" alt="">` : `<div class="thumb-fallback"><span>🦚</span></div>`}
-        </div>
-        <div class="news-body">
-          <div class="news-top">
-            <span class="tag">${a.cat === "urgente" ? "⚡ URGENTE" : escapeHtml(categoryLabel(a.cat).toUpperCase())}</span>
-            <span class="time">${escapeHtml(a.time)}</span>
-          </div>
-          <h3>${escapeHtml(a.title)}</h3>
-          <p>${escapeHtml(a.dek)}</p>
-          <a href="${safeLink(a.link)}" target="_blank" rel="noopener">Ver no Instagram →</a>
-        </div>
-      </div>
-    </article>`;
-}
-
-function reelCard(a) {
-  return `
-    <a class="reel" href="${safeLink(a.link)}" target="_blank" rel="noopener">
-      <div class="reel-media">
-        ${a.image ? `<img src="${escapeHtml(a.image)}" alt="">` : `<div class="reel-fallback"><img src="icons/pavv.png" alt=""></div>`}
-        <span class="play">▶</span>
-      </div>
-      <div class="reel-copy">
-        <strong>${escapeHtml(a.title)}</strong>
-        <small>${escapeHtml(a.time)}</small>
-      </div>
-    </a>`;
-}
-
-function heroHtml(hero) {
-  if (!hero) return "";
-  return `
-    <section class="hero">
-      <div class="hero-media">
-        ${hero.image ? `<img src="${escapeHtml(hero.image)}" alt="">` : `<div class="hero-fallback"><img src="icons/pavv.png" alt="Fala Pavão"></div>`}
-      </div>
-      <div class="hero-overlay"></div>
-      <div class="hero-copy">
-        <span class="badge">${hero.cat === "urgente" ? "URGENTE ⚡" : "DESTAQUE"}</span>
-        <h1>${escapeHtml(hero.title)}</h1>
-        <p>${escapeHtml(hero.time)}</p>
-        <a class="outline-btn" href="${safeLink(hero.link)}" target="_blank" rel="noopener">VER NO INSTAGRAM <span>◎</span></a>
-      </div>
-      <div class="hero-dots"><i class="on"></i><i></i><i></i></div>
-    </section>`;
-}
-
-function menuPanel() {
-  return `
-    <div class="shade ${menuOpen ? "show" : ""}" onclick="toggleMenu(false)"></div>
-    <aside class="drawer ${menuOpen ? "open" : ""}">
-      <div class="drawer-head">
-        <img src="icons/pavv.png" alt="Fala Pavão">
-        <button onclick="toggleMenu(false)">×</button>
-      </div>
-      <a href="${LINKS.instagram}" target="_blank">Instagram</a>
-      <a href="${safeLink(LINKS.whatsapp)}" target="_blank">WhatsApp</a>
-      <button onclick="scrollToNews();toggleMenu(false)">Últimas notícias</button>
-      <button onclick="scrollToOffers();toggleMenu(false)">Ofertas do dia</button>
-      <a href="${safeLink(LINKS.anunciar)}" target="_blank">Anuncie no Fala Pavão</a>
-    </aside>`;
-}
-
-function searchPanel() {
-  return `
-    <div class="search-pop ${searchOpen ? "show" : ""}">
-      <div class="search-box">
-        <span>⌕</span>
-        <input id="search-input" value="${escapeHtml(searchTerm)}" placeholder="Pesquisar notícias..." oninput="searchNews(this.value)">
-        <button onclick="toggleSearch(false)">×</button>
-      </div>
-    </div>`;
-}
-
-function render() {
-  const root = document.getElementById("app");
-  const filtered = filterArticles();
-  const hero = filtered[0] || ARTICLES[0];
-  const rest = filtered.slice(hero ? 1 : 0);
-
-  root.innerHTML = `
-    <div class="app">
-      ${menuPanel()}
-      ${searchPanel()}
-
-      <header class="header">
-        <button class="round" aria-label="Menu" onclick="toggleMenu(true)">☰</button>
-        <div class="brand">
-          <img src="icons/pavv.png" alt="@falapavao notícias">
-          <span>VILA PAVÃO • ES E REGIÃO</span>
-        </div>
-        <button class="round search-round" aria-label="Buscar" onclick="toggleSearch(true)">⌕</button>
-      </header>
-
-      <div class="top-ad">
-        <span>DIVULGUE SUA MARCA AQUI</span>
-        <a href="${safeLink(LINKS.anunciar)}" target="_blank">ANUNCIAR</a>
-      </div>
-
-      <div class="ticker">
-        <div class="ticker-label"><strong>⚡</strong><span>ÚLTIMAS</span></div>
-        <div class="ticker-window">
-          <div class="ticker-track">
-            ${[...ARTICLES, ...ARTICLES].map(a => `<span><b>●</b>${escapeHtml(a.title)}</span>`).join("")}
-          </div>
-        </div>
-      </div>
-
-      <nav class="categories">
-        ${CATS.map(c => `<button class="chip ${activeCat === c.id ? "active" : ""}" onclick="setCategory('${c.id}')"><span>${c.icon}</span>${c.label.toUpperCase()}</button>`).join("")}
-      </nav>
-
-      ${heroHtml(hero)}
-
-      <section class="section instagram-section">
-        <div class="section-head">
-          <h2><span class="instagram-mark">◎</span> ÚLTIMAS DO INSTAGRAM</h2>
-          <a href="${LINKS.instagram}" target="_blank">VER TODOS ›</a>
-        </div>
-        <div class="reels">${ARTICLES.slice(0, 8).map(reelCard).join("")}</div>
-      </section>
-
-      <section class="challenge">
-        <div class="box-art">🎁<span>?</span></div>
-        <div class="challenge-copy">
-          <h2>O QUE TEM<br>NA CAIXA?</h2>
-          <p>Acerte o que tem dentro da caixa e concorra a um prêmio especial!</p>
-        </div>
-        <div class="challenge-actions">
-          <a class="cta" href="${LINKS.instagram}" target="_blank" rel="noopener">PARTICIPAR AGORA</a>
-          <small>Respostas somente no Instagram ◎</small>
-        </div>
-      </section>
-
-      <section class="quick">
-        <a class="quick-card whats" href="${safeLink(LINKS.whatsapp)}" target="_blank">
-          <span class="quick-icon">☏</span>
-          <div><strong>Fale com o Fala Pavão</strong><span>Clique e fale no WhatsApp</span></div>
-          <b>›</b>
-        </a>
-        <a class="quick-card tip" href="${safeLink(LINKS.enviarNoticia)}" target="_blank">
-          <span class="quick-icon">▣</span>
-          <div><strong>Envie sua notícia</strong><span>Mande fotos, vídeos e informações</span></div>
-          <b>›</b>
-        </a>
-      </section>
-
-      <section class="section offers-section">
-        <div class="section-head"><h2>◇ OFERTAS DO DIA</h2><button onclick="scrollToOffers()">VER TODAS ›</button></div>
-        <div class="offers">
-          <article class="offer ml">
-            <div class="market-logo">mercado<br><b>livre</b></div>
-            <p>Ofertas selecionadas e oportunidades.</p>
-            <a href="${safeLink(LINKS.mercadoLivre)}" target="_blank">VER OFERTAS</a>
-          </article>
-          <article class="offer shopee">
-            <div class="market-logo">▢ <b>Shopee</b></div>
-            <p>Cupons, produtos e promoções.</p>
-            <a href="${safeLink(LINKS.shopee)}" target="_blank">VER OFERTAS</a>
-          </article>
-          <article class="offer tiktok">
-            <div class="market-logo">♪ <b>TikTok Shop</b></div>
-            <p>Achadinhos e promoções em destaque.</p>
-            <a href="${safeLink(LINKS.tiktok)}" target="_blank">VER OFERTAS</a>
-          </article>
-        </div>
-      </section>
-
-      <section class="ad">
-        <strong>ANUNCIE AQUI!</strong>
-        <span>Sua marca vista por milhares de pessoas em Vila Pavão e região.</span>
-        <a href="${safeLink(LINKS.anunciar)}" target="_blank">SAIBA MAIS</a>
-      </section>
-
-      <section class="section more-title"><div class="section-head"><h2>▤ MAIS NOTÍCIAS</h2></div></section>
-      <section class="feed" id="news-feed">
-        ${rest.length ? rest.map(newsCard).join("") : `<div class="empty">Nenhuma notícia encontrada.</div>`}
-      </section>
-
-      <nav class="tabbar">
-        <button class="active" onclick="setCategory('todas')"><span class="tab-ico">⌂</span>INÍCIO</button>
-        <button onclick="scrollToNews()"><span class="tab-ico">▤</span>NOTÍCIAS</button>
-        <a href="${LINKS.instagram}" target="_blank"><span class="tab-ico">🎁</span>CAIXA</a>
-        <button onclick="scrollToOffers()"><span class="tab-ico">◇</span>OFERTAS</button>
-        <a href="${safeLink(LINKS.whatsapp)}" target="_blank"><span class="tab-ico">☏</span>WHATSAPP</a>
-      </nav>
-    </div>`;
-
-  if (searchOpen) setTimeout(() => document.getElementById("search-input")?.focus(), 0);
-}
-
-function setCategory(cat) {
-  activeCat = cat;
-  searchTerm = "";
-  render();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function scrollToNews() {
-  document.querySelector("#news-feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function scrollToOffers() {
-  document.querySelector(".offers-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function toggleMenu(open) {
-  menuOpen = open;
-  render();
-}
-
-function toggleSearch(open) {
-  searchOpen = open;
-  render();
-}
-
-function searchNews(value) {
-  searchTerm = value;
-  const caret = value.length;
-  render();
-  setTimeout(() => {
-    const input = document.getElementById("search-input");
-    if (input) {
-      input.focus();
-      input.setSelectionRange(caret, caret);
-    }
-  }, 0);
-}
-
-async function loadInstagram() {
-  if (!INSTAGRAM_API_URL) return;
-  try {
-    const r = await fetch(INSTAGRAM_API_URL, { cache: "no-store" });
-    if (!r.ok) throw new Error("Instagram API");
-    const json = await r.json();
-    const media = Array.isArray(json) ? json : (json.data || []);
-    const fresh = media.map(normalizeMedia).filter(a => a.title);
-    if (fresh.length) {
-      ARTICLES = fresh.slice(0, 30);
-      render();
-    }
-  } catch (e) {
-    console.warn("Usando notícias locais até a API do Instagram responder.", e);
-  }
-}
-
 render();
-loadInstagram();
-setInterval(loadInstagram, 10 * 60 * 1000);
 
-// PWA / instalação
-let deferredPrompt = null;
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById("install-banner")?.classList.add("show");
-});
-
-function installApp() {
-  const banner = document.getElementById("install-banner");
-  if (isIOS) {
-    const text = document.getElementById("install-text");
-    const btn = document.getElementById("install-btn");
-    if (text) text.textContent = "No iPhone: Compartilhar → Adicionar à Tela de Início";
-    if (btn) btn.style.display = "none";
-    banner?.classList.add("show");
-    return;
-  }
-  banner?.classList.remove("show");
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt = null;
-  }
-}
-
-function dismissInstall() {
-  document.getElementById("install-banner")?.classList.remove("show");
-}
-
-if (isIOS && !window.navigator.standalone) {
-  setTimeout(() => {
-    const banner = document.getElementById("install-banner");
-    const text = document.getElementById("install-text");
-    const btn = document.getElementById("install-btn");
-    if (text) text.textContent = "No iPhone: Compartilhar → Adicionar à Tela de Início";
-    if (btn) btn.style.display = "none";
-    banner?.classList.add("show");
-  }, 1500);
-}
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(() => {}));
-}
+if ("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));
