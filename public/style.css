@@ -119,7 +119,7 @@ button{
 
 .marquee>div{
   display:inline-block;
-  animation:move 160s linear infinite;
+  animation:move 180s linear infinite;
   font-size:11px;
   font-weight:700;
 }
