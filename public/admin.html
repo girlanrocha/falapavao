@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel Fala Pavão</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef5fa;color:#052b55;margin:0}.wrap{max-width:760px;margin:30px auto;padding:16px}.card{background:#fff;border:1px solid #d9e3ec;border-radius:14px;padding:18px;margin-bottom:14px}h1,h2{margin-top:0}label{display:block;font-weight:bold;font-size:13px;margin:10px 0 5px}input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #c8d6e2;border-radius:8px}button{border:0;border-radius:9px;padding:11px 15px;background:#075f9d;color:#fff;font-weight:bold;cursor:pointer}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hidden{display:none}.msg{font-size:13px;margin-top:10px}.danger{color:#c81935}.ok{color:#16813a}@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="login" class="card">
+    <h1>Painel Fala Pavão</h1>
+    <p>Entre para gerenciar Ofertas do Dia e anúncios.</p>
+    <label>Usuário</label><input id="user" autocomplete="username">
+    <label>Senha</label><input id="pass" type="password" autocomplete="current-password">
+    <button onclick="login()">Entrar</button>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+
+  <div id="panel" class="hidden">
+    <div class="card"><h1>Conteúdo comercial</h1><button onclick="logout()">Sair</button></div>
+
+    <div class="card">
+      <h2>Anúncio superior</h2>
+      <label>Título</label><input id="topTitle">
+      <label>Texto</label><input id="topText">
+      <label>Link</label><input id="topLink" placeholder="https://...">
+    </div>
+
+    <div class="card">
+      <h2>Ofertas do Dia</h2>
+      <div id="offers"></div>
+    </div>
+
+    <div class="card">
+      <h2>Anúncio inferior</h2>
+      <label>Título</label><input id="bottomTitle">
+      <label>Texto</label><input id="bottomText">
+      <label>Link</label><input id="bottomLink" placeholder="https://...">
+    </div>
+
+    <button onclick="save()">Salvar alterações</button>
+    <div id="saveMsg" class="msg"></div>
+  </div>
+</div>
+<script>
+const defaults={
+ topAd:{title:"ANUNCIE AQUI",text:"Divulgue sua marca no Fala Pavão",link:""},
+ bottomAd:{title:"ANUNCIE AQUI!",text:"Divulgue sua marca no Fala Pavão",link:""},
+ offers:[
+  {name:"Mercado Livre",text:"Ofertas imperdíveis",link:"",cls:"ml"},
+  {name:"Shopee",text:"Cupons e descontos",link:"",cls:"sh"},
+  {name:"TikTok Shop",text:"Promoções exclusivas",link:"",cls:"tt"}
+ ]
+};
+let content=structuredClone(defaults);
+
+function showPanel(){document.getElementById("login").classList.add("hidden");document.getElementById("panel").classList.remove("hidden")}
+function showLogin(){document.getElementById("login").classList.remove("hidden");document.getElementById("panel").classList.add("hidden")}
+
+async function login(){
+ const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user:user.value,pass:pass.value})});
+ const j=await r.json().catch(()=>({}));
+ if(r.ok){showPanel();await load()}
+ else loginMsg.innerHTML='<span class="danger">'+(j.error||"Login inválido")+'</span>';
+}
+async function logout(){await fetch("/api/admin/logout",{method:"POST"});showLogin()}
+function renderOffers(){
+ offers.innerHTML=content.offers.map((o,i)=>`<div class="card"><b>Oferta ${i+1}</b>
+ <label>Nome</label><input id="on${i}" value="${(o.name||"").replaceAll('"','&quot;')}">
+ <label>Texto</label><input id="ot${i}" value="${(o.text||"").replaceAll('"','&quot;')}">
+ <label>Link</label><input id="ol${i}" value="${(o.link||"").replaceAll('"','&quot;')}">
+ </div>`).join("");
+}
+async function load(){
+ const r=await fetch("/api/content",{cache:"no-store"});
+ if(r.ok){content={...defaults,...await r.json()}}
+ topTitle.value=content.topAd?.title||"";topText.value=content.topAd?.text||"";topLink.value=content.topAd?.link||"";
+ bottomTitle.value=content.bottomAd?.title||"";bottomText.value=content.bottomAd?.text||"";bottomLink.value=content.bottomAd?.link||"";
+ content.offers=(content.offers?.length?content.offers:defaults.offers).slice(0,3);renderOffers();
+}
+async function save(){
+ content.topAd={title:topTitle.value,text:topText.value,link:topLink.value};
+ content.bottomAd={title:bottomTitle.value,text:bottomText.value,link:bottomLink.value};
+ content.offers=[0,1,2].map((i)=>({name:document.getElementById("on"+i).value,text:document.getElementById("ot"+i).value,link:document.getElementById("ol"+i).value,cls:["ml","sh","tt"][i]}));
+ const r=await fetch("/api/admin/content",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(content)});
+ const j=await r.json().catch(()=>({}));
+ saveMsg.innerHTML=r.ok?'<span class="ok">Salvo com sucesso.</span>':'<span class="danger">'+(j.error||"Erro ao salvar")+'</span>';
+}
+(async()=>{const r=await fetch("/api/admin/me");if(r.ok){showPanel();load()}})();
+</script>
+</body>
+</html>
