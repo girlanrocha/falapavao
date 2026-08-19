@@ -473,6 +473,93 @@ function render() {
   <main>
 
 
+    <section
+      class="section offers"
+    >
+
+      <div class="section-head">
+
+        <h2>
+          ◇ OFERTAS DO DIA
+        </h2>
+
+        <span>
+          VER TODAS ›
+        </span>
+
+      </div>
+
+
+      <div class="offer-grid">
+
+
+        <button
+          onclick="go(MERCADO_LIVRE_URL)"
+          class="ml"
+        >
+
+          <strong>
+            mercado
+            <br>
+            livre
+          </strong>
+
+          <small>
+            Ofertas imperdíveis
+          </small>
+
+          <b>
+            VER OFERTAS
+          </b>
+
+        </button>
+
+
+        <button
+          onclick="go(SHOPEE_URL)"
+          class="sh"
+        >
+
+          <strong>
+            ▣ Shopee
+          </strong>
+
+          <small>
+            Cupons e descontos
+          </small>
+
+          <b>
+            VER OFERTAS
+          </b>
+
+        </button>
+
+
+        <button
+          onclick="go(TIKTOK_SHOP_URL)"
+          class="tt"
+        >
+
+          <strong>
+            ♪ TikTok Shop
+          </strong>
+
+          <small>
+            Promoções exclusivas
+          </small>
+
+          <b>
+            VER OFERTAS
+          </b>
+
+        </button>
+
+
+      </div>
+
+    </section>
+
+
     <section class="hero" onclick="go('${esc(hero.link || INSTAGRAM_PROFILE)}')" style="cursor:pointer">
 
       <div class="hero-img">
@@ -728,93 +815,6 @@ function render() {
 
       </button>
 
-
-    </section>
-
-
-    <section
-      class="section offers"
-    >
-
-      <div class="section-head">
-
-        <h2>
-          ◇ OFERTAS DO DIA
-        </h2>
-
-        <span>
-          VER TODAS ›
-        </span>
-
-      </div>
-
-
-      <div class="offer-grid">
-
-
-        <button
-          onclick="go(MERCADO_LIVRE_URL)"
-          class="ml"
-        >
-
-          <strong>
-            mercado
-            <br>
-            livre
-          </strong>
-
-          <small>
-            Ofertas imperdíveis
-          </small>
-
-          <b>
-            VER OFERTAS
-          </b>
-
-        </button>
-
-
-        <button
-          onclick="go(SHOPEE_URL)"
-          class="sh"
-        >
-
-          <strong>
-            ▣ Shopee
-          </strong>
-
-          <small>
-            Cupons e descontos
-          </small>
-
-          <b>
-            VER OFERTAS
-          </b>
-
-        </button>
-
-
-        <button
-          onclick="go(TIKTOK_SHOP_URL)"
-          class="tt"
-        >
-
-          <strong>
-            ♪ TikTok Shop
-          </strong>
-
-          <small>
-            Promoções exclusivas
-          </small>
-
-          <b>
-            VER OFERTAS
-          </b>
-
-        </button>
-
-
-      </div>
 
     </section>
 
