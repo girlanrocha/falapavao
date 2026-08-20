@@ -370,3 +370,58 @@ setInterval(loadContent,5*60*1000);
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));
 }
+// =========================
+// INSTALAÇÃO DO APP / PWA
+// =========================
+
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+
+  deferredPrompt = event;
+
+  const banner = document.getElementById("install-banner");
+
+  if (banner) {
+    banner.style.display = "flex";
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+
+  const banner = document.getElementById("install-banner");
+
+  if (banner) {
+    banner.style.display = "none";
+  }
+});
+
+function installApp() {
+  if (!deferredPrompt) {
+    return;
+  }
+
+  deferredPrompt.prompt();
+
+  deferredPrompt.userChoice
+    .then(() => {
+      deferredPrompt = null;
+
+      const banner = document.getElementById("install-banner");
+
+      if (banner) {
+        banner.style.display = "none";
+      }
+    })
+    .catch(() => {});
+}
+
+function dismissInstall() {
+  const banner = document.getElementById("install-banner");
+
+  if (banner) {
+    banner.style.display = "none";
+  }
+}
