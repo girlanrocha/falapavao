@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Painel Fala Pavão</title>
 <style>
-body{font-family:Arial,sans-serif;background:#eef5fa;color:#052b55;margin:0}.wrap{max-width:760px;margin:30px auto;padding:16px}.card{background:#fff;border:1px solid #d9e3ec;border-radius:14px;padding:18px;margin-bottom:14px}h1,h2{margin-top:0}label{display:block;font-weight:bold;font-size:13px;margin:10px 0 5px}input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #c8d6e2;border-radius:8px}button{border:0;border-radius:9px;padding:11px 15px;background:#075f9d;color:#fff;font-weight:bold;cursor:pointer}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hidden{display:none}.msg{font-size:13px;margin-top:10px}.danger{color:#c81935}.ok{color:#16813a}@media(max-width:600px){.grid{grid-template-columns:1fr}}
+body{font-family:Arial,sans-serif;background:#eef5fa;color:#052b55;margin:0}.wrap{max-width:760px;margin:30px auto;padding:16px}.card{background:#fff;border:1px solid #d9e3ec;border-radius:14px;padding:18px;margin-bottom:14px}h1,h2{margin-top:0}label{display:block;font-weight:bold;font-size:13px;margin:10px 0 5px}input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #c8d6e2;border-radius:8px}button{border:0;border-radius:9px;padding:11px 15px;background:#075f9d;color:#fff;font-weight:bold;cursor:pointer}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hidden{display:none}.msg{font-size:13px;margin-top:10px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#eef7ff;border:1px solid #cfe5f5;border-radius:12px;padding:13px}.stat b{display:block;font-size:24px}.stat small{font-size:11px}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:9px;border-bottom:1px solid #e2ebf2;text-align:left;font-size:12px}.bar{height:8px;background:#e6eef5;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:#075f9d}.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.analytics-grid{grid-template-columns:1fr}}.msg{font-size:13px;margin-top:10px}.danger{color:#c81935}.ok{color:#16813a}@media(max-width:600px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -21,6 +21,52 @@ body{font-family:Arial,sans-serif;background:#eef5fa;color:#052b55;margin:0}.wra
 
   <div id="panel" class="hidden">
     <div class="card"><h1>Conteúdo comercial</h1><button onclick="logout()">Sair</button></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div>
+          <h1 style="margin-bottom:4px">📊 Estatísticas privadas</h1>
+          <p style="margin-top:0;font-size:13px">Acessos, cidades e origem dos visitantes. Somente você vê estes dados.</p>
+        </div>
+        <button onclick="loadStats()">Atualizar</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><small>Hoje</small><b id="stToday">0</b><small>acessos</small></div>
+        <div class="stat"><small>7 dias</small><b id="st7">0</b><small>acessos</small></div>
+        <div class="stat"><small>30 dias</small><b id="st30">0</b><small>acessos</small></div>
+        <div class="stat"><small>Período</small><b id="stPeriod">0</b><small id="stPeriodLabel">30 dias</small></div>
+      </div>
+
+      <div style="margin-top:14px">
+        <label>Período das tabelas</label>
+        <select id="statsDays" onchange="loadStats()" style="padding:9px;border:1px solid #c8d6e2;border-radius:8px">
+          <option value="7">7 dias</option>
+          <option value="30" selected>30 dias</option>
+          <option value="90">90 dias</option>
+        </select>
+      </div>
+
+      <div class="analytics-grid" style="margin-top:12px">
+        <div>
+          <h2>📍 Cidades</h2>
+          <div id="citiesTable"></div>
+        </div>
+        <div>
+          <h2>🔗 Origem dos acessos</h2>
+          <div id="sourcesTable"></div>
+        </div>
+        <div>
+          <h2>📱 Dispositivos</h2>
+          <div id="devicesTable"></div>
+        </div>
+        <div>
+          <h2>🕐 Horários</h2>
+          <div id="hoursTable"></div>
+        </div>
+      </div>
+      <div id="statsMsg" class="msg"></div>
+    </div>
+
 
     <div class="card">
       <h2>Anúncio superior</h2>
@@ -63,7 +109,7 @@ function showLogin(){document.getElementById("login").classList.remove("hidden")
 async function login(){
  const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user:user.value,pass:pass.value})});
  const j=await r.json().catch(()=>({}));
- if(r.ok){showPanel();await load()}
+ if(r.ok){showPanel();await load();await loadStats()}
  else loginMsg.innerHTML='<span class="danger">'+(j.error||"Login inválido")+'</span>';
 }
 async function logout(){await fetch("/api/admin/logout",{method:"POST"});showLogin()}
@@ -73,6 +119,38 @@ function renderOffers(){
  <label>Texto</label><input id="ot${i}" value="${(o.text||"").replaceAll('"','&quot;')}">
  <label>Link</label><input id="ol${i}" value="${(o.link||"").replaceAll('"','&quot;')}">
  </div>`).join("");
+}
+
+function fmt(n){return Number(n||0).toLocaleString("pt-BR")}
+function percent(v,total){return total?Math.round((Number(v||0)/total)*100):0}
+function rowsTable(rows,labelFn,total){
+  if(!rows?.length) return '<p style="font-size:12px;color:#60788f">Ainda não há dados suficientes.</p>';
+  return `<table class="table"><tbody>${rows.map(r=>{
+    const label=labelFn(r);
+    const p=percent(r.views,total);
+    return `<tr><td style="width:48%"><b>${label}</b></td><td style="width:34%"><div class="bar"><i style="width:${p}%"></i></div></td><td>${fmt(r.views)}</td></tr>`;
+  }).join("")}</tbody></table>`;
+}
+async function loadStats(){
+  const days=Number(document.getElementById("statsDays")?.value||30);
+  statsMsg.textContent="Carregando estatísticas...";
+  const r=await fetch(`/api/admin/stats?days=${days}`,{cache:"no-store"});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){
+    statsMsg.innerHTML='<span class="danger">'+(j.error||"Não foi possível carregar as estatísticas.")+'</span>';
+    return;
+  }
+  stToday.textContent=fmt(j.totals?.today);
+  st7.textContent=fmt(j.totals?.days7);
+  st30.textContent=fmt(j.totals?.days30);
+  stPeriod.textContent=fmt(j.totals?.period);
+  stPeriodLabel.textContent=`${j.periodDays||days} dias`;
+  const total=Number(j.totals?.period||0);
+  citiesTable.innerHTML=rowsTable(j.cities,r=>`${r.city||"Desconhecida"}${r.region?` - ${r.region}`:""}`,total);
+  sourcesTable.innerHTML=rowsTable(j.sources,r=>r.source||"Outro",total);
+  devicesTable.innerHTML=rowsTable(j.devices,r=>r.device||"Outro",total);
+  hoursTable.innerHTML=rowsTable(j.hours,r=>`${String(r.hour).padStart(2,"0")}:00`,total);
+  statsMsg.innerHTML='<span class="ok">Atualizado.</span>';
 }
 async function load(){
  const r=await fetch("/api/content",{cache:"no-store"});
@@ -89,7 +167,7 @@ async function save(){
  const j=await r.json().catch(()=>({}));
  saveMsg.innerHTML=r.ok?'<span class="ok">Salvo com sucesso.</span>':'<span class="danger">'+(j.error||"Erro ao salvar")+'</span>';
 }
-(async()=>{const r=await fetch("/api/admin/me");if(r.ok){showPanel();load()}})();
+(async()=>{const r=await fetch("/api/admin/me");if(r.ok){showPanel();load();loadStats()}})();
 </script>
 </body>
 </html>
