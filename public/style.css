@@ -17,3 +17,31 @@ main{padding:7px 8px}.section{margin-top:8px}.section-head{display:flex;justify-
 .bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,480px);height:58px;background:#fffffff2;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);z-index:20;backdrop-filter:blur(10px)}.bottom button{border:0;background:none;color:#7290ad;font-size:18px}.bottom small{display:block;font-size:6.5px;font-weight:900;margin-top:2px}.bottom button:first-child{color:var(--blue)}
 .searchbox{display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);width:min(92%,440px);z-index:50}.searchbox input{width:100%;padding:14px;border-radius:20px;border:2px solid var(--blue)}.searchbox button{position:absolute;right:8px;top:5px;border:0;background:none;font-size:25px}.searching .searchbox{display:block}
 @media(max-width:390px){.hero.compact{height:150px}.hero h1{font-size:13px}.boxgame{grid-template-columns:48px 1fr 1.25fr}.iganswer{display:none}.advert p{display:none}.advert{grid-template-columns:34px 1fr auto}}
+
+
+/* Ofertas com foto automática do produto */
+.top-offers .offer-grid button.has-photo{
+  height:138px;
+  padding:5px;
+}
+.offer-photo{
+  display:block;
+  width:100%;
+  height:66px;
+  object-fit:contain;
+  background:#fff;
+  border-radius:8px;
+  margin-bottom:5px;
+}
+.top-offers .offer-grid button.has-photo strong{
+  font-size:9px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.top-offers .offer-grid button.has-photo small{
+  display:none;
+}
+.top-offers .offer-grid button.has-photo b{
+  width:100%;
+}
