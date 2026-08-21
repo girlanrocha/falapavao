@@ -18,9 +18,9 @@ const DEFAULT_CONTENT = {
     link: ""
   },
   offers: [
-    { name:"Mercado Livre", text:"Ofertas imperdíveis", link:"", cls:"ml" },
-    { name:"Shopee", text:"Cupons e descontos", link:"", cls:"sh" },
-    { name:"TikTok Shop", text:"Promoções exclusivas", link:"", cls:"tt" }
+    { name:"Mercado Livre", text:"Ofertas imperdíveis", link:"", image:"", cls:"ml" },
+    { name:"Shopee", text:"Cupons e descontos", link:"", image:"", cls:"sh" },
+    { name:"TikTok Shop", text:"Promoções exclusivas", link:"", image:"", cls:"tt" }
   ]
 };
 
@@ -207,7 +207,9 @@ function heroHtml(hero){
 
 function offerHtml(o){
   const cls=o.cls||"ml";
-  return `<button class="${esc(cls)}" onclick="go('${esc(o.link||"")}')">
+  const photo=o.image ? `<img class="offer-photo" src="${esc(o.image)}" alt="${esc(o.name||"Produto")}" loading="lazy">` : "";
+  return `<button class="${esc(cls)} ${o.image?"has-photo":""}" onclick="go('${esc(o.link||"")}')">
+    ${photo}
     <strong>${esc(o.name||"Oferta")}</strong>
     <small>${esc(o.text||"Confira")}</small>
     <b>VER OFERTA</b>
@@ -370,58 +372,31 @@ setInterval(loadContent,5*60*1000);
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));
 }
-// =========================
-// INSTALAÇÃO DO APP / PWA
-// =========================
 
+
+// Instalação PWA no Android/Chrome
 let deferredPrompt = null;
-
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
-
   deferredPrompt = event;
-
   const banner = document.getElementById("install-banner");
-
-  if (banner) {
-    banner.style.display = "flex";
-  }
+  if (banner) banner.style.display = "flex";
 });
-
 window.addEventListener("appinstalled", () => {
   deferredPrompt = null;
-
   const banner = document.getElementById("install-banner");
-
-  if (banner) {
-    banner.style.display = "none";
-  }
+  if (banner) banner.style.display = "none";
 });
-
-function installApp() {
-  if (!deferredPrompt) {
-    return;
-  }
-
+function installApp(){
+  if(!deferredPrompt) return;
   deferredPrompt.prompt();
-
-  deferredPrompt.userChoice
-    .then(() => {
-      deferredPrompt = null;
-
-      const banner = document.getElementById("install-banner");
-
-      if (banner) {
-        banner.style.display = "none";
-      }
-    })
-    .catch(() => {});
+  deferredPrompt.userChoice.finally(()=>{
+    deferredPrompt=null;
+    const banner=document.getElementById("install-banner");
+    if(banner) banner.style.display="none";
+  });
 }
-
-function dismissInstall() {
-  const banner = document.getElementById("install-banner");
-
-  if (banner) {
-    banner.style.display = "none";
-  }
+function dismissInstall(){
+  const banner=document.getElementById("install-banner");
+  if(banner) banner.style.display="none";
 }
