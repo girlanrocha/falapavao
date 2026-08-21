@@ -8,5 +8,20 @@
     "binding": "ASSETS",
     "run_worker_first": true,
     "not_found_handling": "single-page-application"
-  }
+  },
+
+  "d1_databases": [
+    {
+      "binding": "ANALYTICS_DB",
+      "database_name": "falapavao-analytics",
+      "database_id": "e216801d-1d9e-4895-a431-2f03ca68b3ad"
+    }
+  ],
+
+  "kv_namespaces": [
+    {
+      "binding": "CONTENT",
+      "id": "db05fdc686e245d284009981b25b692d"
+    }
+  ]
 }
