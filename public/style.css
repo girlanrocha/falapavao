@@ -54,3 +54,159 @@ main{padding:10px 9px}.hero{height:220px;border-radius:18px;overflow:hidden;disp
   line-height:7px!important;
   flex:none!important;
 }
+
+
+/* =========================================
+   OFERTAS DO DIA — VITRINE MAIS CHAMATIVA
+   Mantém 3 cards lado a lado no celular
+========================================= */
+
+.top-offers{
+  margin-top:10px;
+}
+
+.top-offers .section-head h2{
+  font-size:13px;
+  font-weight:900;
+}
+
+.top-offers .section-head h2::after{
+  content:" · Encontramos para você";
+  font-size:8px;
+  font-weight:700;
+  color:#6d8296;
+}
+
+.top-offers .offer-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  align-items:start;
+}
+
+.top-offers .offer-grid button,
+.top-offers .offer-grid button.has-photo{
+  position:relative;
+  height:154px!important;
+  min-height:154px!important;
+  max-height:154px!important;
+  padding:7px!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  box-shadow:0 3px 10px #08294d18;
+  transition:transform .16s ease, box-shadow .16s ease;
+}
+
+.top-offers .offer-grid button:active{
+  transform:scale(.97);
+}
+
+@media (hover:hover){
+  .top-offers .offer-grid button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px #08294d26;
+  }
+}
+
+/* Selo no topo */
+.top-offers .offer-grid button::before{
+  content:"🔥 OFERTA";
+  position:absolute;
+  top:5px;
+  left:5px;
+  z-index:2;
+  padding:3px 5px;
+  border-radius:7px;
+  background:#ff1838;
+  color:#fff;
+  font-size:6px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+
+/* Foto grande, inteira e centralizada */
+.top-offers .offer-grid .offer-photo{
+  display:block!important;
+  width:100%!important;
+  height:86px!important;
+  min-height:86px!important;
+  max-height:86px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  background:#fff!important;
+  border-radius:10px!important;
+  margin:0 0 5px!important;
+  padding:3px!important;
+  flex:none!important;
+}
+
+/* Nome do produto */
+.top-offers .offer-grid button.has-photo strong,
+.top-offers .offer-grid button strong{
+  display:block!important;
+  width:100%;
+  font-size:8px!important;
+  line-height:9px!important;
+  font-weight:900!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  margin:0 0 4px!important;
+}
+
+/* Esconde descrição para a foto ter destaque */
+.top-offers .offer-grid button.has-photo small{
+  display:none!important;
+}
+
+/* CTA maior */
+.top-offers .offer-grid button.has-photo b,
+.top-offers .offer-grid button b{
+  display:block!important;
+  width:100%!important;
+  margin-top:auto!important;
+  padding:5px 3px!important;
+  border-radius:9px!important;
+  font-size:6.5px!important;
+  line-height:8px!important;
+  font-weight:900!important;
+  text-align:center!important;
+  flex:none!important;
+}
+
+/* Pequena identidade por marketplace */
+.top-offers .ml{
+  background:#fff9d9!important;
+}
+.top-offers .sh{
+  background:#fff1ed!important;
+}
+.top-offers .tt{
+  background:#fff!important;
+}
+
+/* Ajuste em telas menores */
+@media(max-width:390px){
+  .top-offers .offer-grid{
+    gap:5px;
+  }
+
+  .top-offers .offer-grid button,
+  .top-offers .offer-grid button.has-photo{
+    height:145px!important;
+    min-height:145px!important;
+    max-height:145px!important;
+    padding:5px!important;
+  }
+
+  .top-offers .offer-grid .offer-photo{
+    height:79px!important;
+    min-height:79px!important;
+    max-height:79px!important;
+  }
+
+  .top-offers .section-head h2::after{
+    display:none;
+  }
+}
