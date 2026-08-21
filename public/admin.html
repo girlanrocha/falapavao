@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Painel Fala Pavão</title>
 <style>
-body{font-family:Arial,sans-serif;background:#eef5fa;color:#052b55;margin:0}.wrap{max-width:760px;margin:30px auto;padding:16px}.card{background:#fff;border:1px solid #d9e3ec;border-radius:14px;padding:18px;margin-bottom:14px}h1,h2{margin-top:0}label{display:block;font-weight:bold;font-size:13px;margin:10px 0 5px}input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #c8d6e2;border-radius:8px}button{border:0;border-radius:9px;padding:11px 15px;background:#075f9d;color:#fff;font-weight:bold;cursor:pointer}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hidden{display:none}.msg{font-size:13px;margin-top:10px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#eef7ff;border:1px solid #cfe5f5;border-radius:12px;padding:13px}.stat b{display:block;font-size:24px}.stat small{font-size:11px}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:9px;border-bottom:1px solid #e2ebf2;text-align:left;font-size:12px}.bar{height:8px;background:#e6eef5;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:#075f9d}.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.analytics-grid{grid-template-columns:1fr}}.msg{font-size:13px;margin-top:10px}.danger{color:#c81935}.ok{color:#16813a}@media(max-width:600px){.grid{grid-template-columns:1fr}}
+body{font-family:Arial,sans-serif;background:#eef5fa;color:#052b55;margin:0}.wrap{max-width:760px;margin:30px auto;padding:16px}.card{background:#fff;border:1px solid #d9e3ec;border-radius:14px;padding:18px;margin-bottom:14px}h1,h2{margin-top:0}label{display:block;font-weight:bold;font-size:13px;margin:10px 0 5px}input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #c8d6e2;border-radius:8px}button{border:0;border-radius:9px;padding:11px 15px;background:#075f9d;color:#fff;font-weight:bold;cursor:pointer}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hidden{display:none}.msg{font-size:13px;margin-top:10px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#eef7ff;border:1px solid #cfe5f5;border-radius:12px;padding:13px}.stat b{display:block;font-size:24px}.stat small{font-size:11px}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:9px;border-bottom:1px solid #e2ebf2;text-align:left;font-size:12px}.bar{height:8px;background:#e6eef5;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:#075f9d}.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.analytics-grid{grid-template-columns:1fr}}.msg{font-size:13px;margin-top:10px}.preview-product{display:grid;grid-template-columns:92px 1fr;gap:10px;align-items:center;margin-top:10px;padding:10px;background:#f6f9fc;border:1px solid #dce7ef;border-radius:10px}.preview-product img{width:92px;height:92px;object-fit:contain;background:#fff;border-radius:8px;border:1px solid #e1e8ee}.preview-product small{display:block;color:#60788f;margin-top:5px}.secondary{background:#eef7ff!important;color:#075f9d!important;border:1px solid #bcdcf0!important;margin-top:7px}.danger{color:#c81935}.ok{color:#16813a}@media(max-width:600px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -113,12 +113,56 @@ async function login(){
  else loginMsg.innerHTML='<span class="danger">'+(j.error||"Login inválido")+'</span>';
 }
 async function logout(){await fetch("/api/admin/logout",{method:"POST"});showLogin()}
+function safeAttr(v=""){return String(v).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
 function renderOffers(){
  offers.innerHTML=content.offers.map((o,i)=>`<div class="card"><b>Oferta ${i+1}</b>
- <label>Nome</label><input id="on${i}" value="${(o.name||"").replaceAll('"','&quot;')}">
- <label>Texto</label><input id="ot${i}" value="${(o.text||"").replaceAll('"','&quot;')}">
- <label>Link</label><input id="ol${i}" value="${(o.link||"").replaceAll('"','&quot;')}">
+ <label>Nome</label><input id="on${i}" value="${safeAttr(o.name||"")}">
+ <label>Texto</label><input id="ot${i}" value="${safeAttr(o.text||"")}">
+ <label>Link do produto</label><input id="ol${i}" value="${safeAttr(o.link||"")}" placeholder="https://...">
+ <button class="secondary" type="button" onclick="buscarProduto(${i})">🔎 Buscar foto e dados do link</button>
+ <label>Imagem do produto</label><input id="oi${i}" value="${safeAttr(o.image||"")}" placeholder="Preenchida automaticamente ou cole a URL da imagem">
+ <div id="op${i}" class="preview-product" style="${o.image?"":"display:none"}">
+   <img id="opi${i}" src="${safeAttr(o.image||"")}" alt="">
+   <div><b id="opt${i}">${safeAttr(o.name||"Prévia do produto")}</b><small id="opm${i}">${safeAttr(o.text||"")}</small></div>
+ </div>
+ <div id="oe${i}" class="msg"></div>
  </div>`).join("");
+}
+
+async function buscarProduto(i){
+ const link=document.getElementById("ol"+i).value.trim();
+ const msg=document.getElementById("oe"+i);
+ if(!link){msg.innerHTML='<span class="danger">Cole primeiro o link do produto.</span>';return}
+ msg.textContent="Buscando foto e informações...";
+ try{
+   const r=await fetch("/api/admin/product-preview",{
+     method:"POST",
+     headers:{"Content-Type":"application/json"},
+     body:JSON.stringify({url:link})
+   });
+   const j=await r.json().catch(()=>({}));
+   if(!r.ok) throw new Error(j.error||"Não foi possível ler a página.");
+
+   if(j.url) document.getElementById("ol"+i).value=j.url;
+   if(j.title && !document.getElementById("on"+i).value.trim()) document.getElementById("on"+i).value=j.title;
+   if(j.description && !document.getElementById("ot"+i).value.trim()) document.getElementById("ot"+i).value=j.description;
+   if(j.image) document.getElementById("oi"+i).value=j.image;
+
+   const image=document.getElementById("oi"+i).value.trim();
+   const p=document.getElementById("op"+i);
+   if(image){
+     document.getElementById("opi"+i).src=image;
+     document.getElementById("opt"+i).textContent=document.getElementById("on"+i).value||j.title||"Produto";
+     document.getElementById("opm"+i).textContent=document.getElementById("ot"+i).value||j.description||"";
+     p.style.display="grid";
+     msg.innerHTML='<span class="ok">Dados encontrados. Confira e clique em Salvar alterações.</span>';
+   }else{
+     p.style.display="none";
+     msg.innerHTML='<span class="danger">O link foi lido, mas a loja não liberou uma imagem. Você pode colar a URL da imagem manualmente.</span>';
+   }
+ }catch(e){
+   msg.innerHTML='<span class="danger">'+e.message+'</span>';
+ }
 }
 
 function fmt(n){return Number(n||0).toLocaleString("pt-BR")}
@@ -162,7 +206,7 @@ async function load(){
 async function save(){
  content.topAd={title:topTitle.value,text:topText.value,link:topLink.value};
  content.bottomAd={title:bottomTitle.value,text:bottomText.value,link:bottomLink.value};
- content.offers=[0,1,2].map((i)=>({name:document.getElementById("on"+i).value,text:document.getElementById("ot"+i).value,link:document.getElementById("ol"+i).value,cls:["ml","sh","tt"][i]}));
+ content.offers=[0,1,2].map((i)=>({name:document.getElementById("on"+i).value,text:document.getElementById("ot"+i).value,link:document.getElementById("ol"+i).value,image:document.getElementById("oi"+i).value,cls:["ml","sh","tt"][i]}));
  const r=await fetch("/api/admin/content",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(content)});
  const j=await r.json().catch(()=>({}));
  saveMsg.innerHTML=r.ok?'<span class="ok">Salvo com sucesso.</span>':'<span class="danger">'+(j.error||"Erro ao salvar")+'</span>';
