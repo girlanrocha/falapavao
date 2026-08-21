@@ -400,3 +400,49 @@ function dismissInstall(){
   const banner=document.getElementById("install-banner");
   if(banner) banner.style.display="none";
 }
+
+
+// =========================
+// ESTATÍSTICAS COM GPS OPCIONAL
+// =========================
+// Conta no máximo uma visita a cada 30 minutos neste navegador.
+// Se a pessoa autorizar localização, usa GPS para melhorar a cidade.
+// Se recusar, o Worker usa a localização aproximada do IP.
+async function registrarAcesso(){
+  try{
+    const key="fp_last_visit";
+    const last=Number(localStorage.getItem(key)||0);
+    if(Date.now()-last < 30*60*1000) return;
+
+    let coords=null;
+
+    if("geolocation" in navigator){
+      coords=await new Promise(resolve=>{
+        navigator.geolocation.getCurrentPosition(
+          pos=>resolve({
+            lat:pos.coords.latitude,
+            lon:pos.coords.longitude
+          }),
+          ()=>resolve(null),
+          {
+            enableHighAccuracy:true,
+            timeout:6000,
+            maximumAge:5*60*1000
+          }
+        );
+      });
+    }
+
+    const r=await fetch("/api/analytics/view",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(coords||{})
+    });
+
+    if(r.ok) localStorage.setItem(key,String(Date.now()));
+  }catch(e){
+    console.warn("Estatísticas:",e);
+  }
+}
+
+window.addEventListener("load", registrarAcesso);
