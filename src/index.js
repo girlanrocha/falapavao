@@ -90,6 +90,42 @@ export default {
     }
 
 
+
+    if (url.pathname === "/api/analytics/view" && request.method === "POST") {
+      if (!env.ANALYTICS_DB) return json({ error: "Binding D1 ANALYTICS_DB não configurado." }, 503);
+
+      const body = await request.json().catch(() => ({}));
+      let gpsCity = "";
+      let gpsRegion = "";
+
+      const lat = Number(body.lat);
+      const lon = Number(body.lon);
+
+      if (
+        Number.isFinite(lat) && Number.isFinite(lon) &&
+        lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
+      ) {
+        try {
+          const geo = await reverseGpsCity(lat, lon, env);
+          gpsCity = geo.city || "";
+          gpsRegion = geo.region || "";
+        } catch (e) {
+          console.warn("GPS reverse geocode:", e);
+        }
+      }
+
+      try {
+        await recordPageView(request, env, {
+          city: gpsCity,
+          region: gpsRegion
+        });
+        return json({ ok: true, city: gpsCity || request.cf?.city || "Desconhecida" });
+      } catch (e) {
+        console.error("Analytics view:", e);
+        return json({ error: "Não foi possível registrar o acesso." }, 500);
+      }
+    }
+
     if (url.pathname === "/api/admin/stats" && request.method === "GET") {
       if (!(await isAdmin(request, env))) return json({ error: "Não autorizado" }, 401);
       if (!env.ANALYTICS_DB) return json({ error: "Binding D1 ANALYTICS_DB não configurado." }, 503);
@@ -173,12 +209,6 @@ export default {
         console.error("Analytics query error", e);
         return json({ error: "Não foi possível consultar as estatísticas." }, 500);
       }
-    }
-
-    // Registra somente visualização real de página pública.
-    // Não salva IP, nome, cookie ou outro identificador pessoal.
-    if (shouldCountPageView(request, url)) {
-      ctx.waitUntil(recordPageView(request, env));
     }
 
     return env.ASSETS.fetch(request);
@@ -371,7 +401,7 @@ function shouldCountPageView(request, url) {
   return true;
 }
 
-async function recordPageView(request, env) {
+async function recordPageView(request, env, override = {}) {
   if (!env.ANALYTICS_DB) return;
 
   const cf = request.cf || {};
@@ -379,8 +409,8 @@ async function recordPageView(request, env) {
   const day = now.toISOString().slice(0, 10);
   const hour = now.getUTCHours();
 
-  const city = cleanDimension(cf.city || "Desconhecida", 80);
-  const region = cleanDimension(cf.region || "", 80);
+  const city = cleanDimension(override.city || cf.city || "Desconhecida", 80);
+  const region = cleanDimension(override.region || cf.region || "", 80);
   const country = cleanDimension(cf.country || "XX", 8);
   const source = cleanDimension(detectSource(request), 40);
   const device = cleanDimension(detectDevice(request.headers.get("User-Agent") || ""), 20);
@@ -396,6 +426,67 @@ async function recordPageView(request, env) {
   } catch (e) {
     console.error("Analytics write error", e);
   }
+}
+
+
+async function reverseGpsCity(lat, lon, env) {
+  const latKey = Math.round(lat * 100) / 100;
+  const lonKey = Math.round(lon * 100) / 100;
+  const cacheKey = `gps-city:${latKey}:${lonKey}`;
+
+  // Aproveita o KV CONTENT para cache, evitando consultar o geocodificador
+  // repetidamente para a mesma área.
+  if (env.CONTENT) {
+    try {
+      const cached = await env.CONTENT.get(cacheKey, "json");
+      if (cached?.city) return cached;
+    } catch {}
+  }
+
+  const endpoint = new URL("https://nominatim.openstreetmap.org/reverse");
+  endpoint.searchParams.set("format", "jsonv2");
+  endpoint.searchParams.set("lat", String(lat));
+  endpoint.searchParams.set("lon", String(lon));
+  endpoint.searchParams.set("zoom", "10");
+  endpoint.searchParams.set("addressdetails", "1");
+
+  const r = await fetch(endpoint.toString(), {
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": "FalaPavao/1.0 (https://falapavao.com)",
+      "Referer": "https://falapavao.com/"
+    }
+  });
+
+  if (!r.ok) throw new Error(`Geocodificador ${r.status}`);
+
+  const j = await r.json();
+  const a = j.address || {};
+  const city =
+    a.city ||
+    a.town ||
+    a.village ||
+    a.municipality ||
+    a.city_district ||
+    a.county ||
+    "";
+
+  const region = a.state || a.region || "";
+
+  const result = {
+    city: cleanDimension(city, 80),
+    region: cleanDimension(region, 80)
+  };
+
+  if (env.CONTENT && result.city && result.city !== "Desconhecido") {
+    try {
+      await env.CONTENT.put(cacheKey, JSON.stringify(result), {
+        expirationTtl: 60 * 60 * 24 * 30
+      });
+    } catch {}
+  }
+
+  return result;
 }
 
 function detectSource(request) {
