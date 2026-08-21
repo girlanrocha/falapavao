@@ -113,56 +113,103 @@ async function login(){
  else loginMsg.innerHTML='<span class="danger">'+(j.error||"Login inválido")+'</span>';
 }
 async function logout(){await fetch("/api/admin/logout",{method:"POST"});showLogin()}
-function safeAttr(v=""){return String(v).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+function safeAttr(v=""){
+ return String(v).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+}
+
 function renderOffers(){
- offers.innerHTML=content.offers.map((o,i)=>`<div class="card"><b>Oferta ${i+1}</b>
- <label>Nome</label><input id="on${i}" value="${safeAttr(o.name||"")}">
- <label>Texto</label><input id="ot${i}" value="${safeAttr(o.text||"")}">
- <label>Link do produto</label><input id="ol${i}" value="${safeAttr(o.link||"")}" placeholder="https://...">
- <button class="secondary" type="button" onclick="buscarProduto(${i})">🔎 Buscar foto e dados do link</button>
- <label>Imagem do produto</label><input id="oi${i}" value="${safeAttr(o.image||"")}" placeholder="Preenchida automaticamente ou cole a URL da imagem">
- <div id="op${i}" class="preview-product" style="${o.image?"":"display:none"}">
-   <img id="opi${i}" src="${safeAttr(o.image||"")}" alt="">
-   <div><b id="opt${i}">${safeAttr(o.name||"Prévia do produto")}</b><small id="opm${i}">${safeAttr(o.text||"")}</small></div>
- </div>
- <div id="oe${i}" class="msg"></div>
+ offers.innerHTML=content.offers.map((o,i)=>`<div class="card">
+   <b>Oferta ${i+1}</b>
+
+   <label>Nome</label>
+   <input id="on${i}" value="${safeAttr(o.name||"")}">
+
+   <label>Texto</label>
+   <input id="ot${i}" value="${safeAttr(o.text||"")}">
+
+   <label>Link do produto</label>
+   <input id="ol${i}" value="${safeAttr(o.link||"")}" placeholder="https://...">
+
+   <label>Foto do produto</label>
+   <input type="file" accept="image/*" onchange="selecionarFotoOferta(${i},this)">
+   <input type="hidden" id="oi${i}" value="${safeAttr(o.image||"")}">
+
+   <div id="op${i}" class="preview-product" style="${o.image?"":"display:none"}">
+     <img id="opi${i}" src="${safeAttr(o.image||"")}" alt="Foto da oferta">
+     <div>
+       <b>Prévia da foto</b>
+       <small>A imagem será reduzida automaticamente antes de salvar.</small>
+       <button class="secondary" type="button" onclick="removerFotoOferta(${i})">Remover foto</button>
+     </div>
+   </div>
+
+   <div id="oe${i}" class="msg"></div>
  </div>`).join("");
 }
 
-async function buscarProduto(i){
- const link=document.getElementById("ol"+i).value.trim();
+async function selecionarFotoOferta(i,input){
+ const file=input.files?.[0];
  const msg=document.getElementById("oe"+i);
- if(!link){msg.innerHTML='<span class="danger">Cole primeiro o link do produto.</span>';return}
- msg.textContent="Buscando foto e informações...";
- try{
-   const r=await fetch("/api/admin/product-preview",{
-     method:"POST",
-     headers:{"Content-Type":"application/json"},
-     body:JSON.stringify({url:link})
-   });
-   const j=await r.json().catch(()=>({}));
-   if(!r.ok) throw new Error(j.error||"Não foi possível ler a página.");
+ if(!file) return;
 
-   if(j.url) document.getElementById("ol"+i).value=j.url;
-   if(j.title && !document.getElementById("on"+i).value.trim()) document.getElementById("on"+i).value=j.title;
-   if(j.description && !document.getElementById("ot"+i).value.trim()) document.getElementById("ot"+i).value=j.description;
-   if(j.image) document.getElementById("oi"+i).value=j.image;
-
-   const image=document.getElementById("oi"+i).value.trim();
-   const p=document.getElementById("op"+i);
-   if(image){
-     document.getElementById("opi"+i).src=image;
-     document.getElementById("opt"+i).textContent=document.getElementById("on"+i).value||j.title||"Produto";
-     document.getElementById("opm"+i).textContent=document.getElementById("ot"+i).value||j.description||"";
-     p.style.display="grid";
-     msg.innerHTML='<span class="ok">Dados encontrados. Confira e clique em Salvar alterações.</span>';
-   }else{
-     p.style.display="none";
-     msg.innerHTML='<span class="danger">O link foi lido, mas a loja não liberou uma imagem. Você pode colar a URL da imagem manualmente.</span>';
-   }
- }catch(e){
-   msg.innerHTML='<span class="danger">'+e.message+'</span>';
+ if(!file.type.startsWith("image/")){
+   msg.innerHTML='<span class="danger">Escolha um arquivo de imagem.</span>';
+   return;
  }
+
+ if(file.size > 12*1024*1024){
+   msg.innerHTML='<span class="danger">A foto é muito grande. Escolha uma imagem menor que 12 MB.</span>';
+   input.value="";
+   return;
+ }
+
+ msg.textContent="Preparando a foto...";
+
+ try{
+   const data=await reduzirImagem(file,720,0.80);
+   document.getElementById("oi"+i).value=data;
+   document.getElementById("opi"+i).src=data;
+   document.getElementById("op"+i).style.display="grid";
+   msg.innerHTML='<span class="ok">Foto pronta. Clique em Salvar alterações.</span>';
+ }catch(e){
+   msg.innerHTML='<span class="danger">Não foi possível preparar a foto.</span>';
+ }
+}
+
+function reduzirImagem(file,maxSize,quality){
+ return new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onerror=reject;
+   reader.onload=()=>{
+     const img=new Image();
+     img.onerror=reject;
+     img.onload=()=>{
+       let w=img.width,h=img.height;
+       const scale=Math.min(1,maxSize/Math.max(w,h));
+       w=Math.max(1,Math.round(w*scale));
+       h=Math.max(1,Math.round(h*scale));
+
+       const canvas=document.createElement("canvas");
+       canvas.width=w;
+       canvas.height=h;
+       const ctx=canvas.getContext("2d");
+       ctx.fillStyle="#ffffff";
+       ctx.fillRect(0,0,w,h);
+       ctx.drawImage(img,0,0,w,h);
+
+       resolve(canvas.toDataURL("image/jpeg",quality));
+     };
+     img.src=reader.result;
+   };
+   reader.readAsDataURL(file);
+ });
+}
+
+function removerFotoOferta(i){
+ document.getElementById("oi"+i).value="";
+ document.getElementById("opi"+i).src="";
+ document.getElementById("op"+i).style.display="none";
+ document.getElementById("oe"+i).innerHTML='<span class="ok">Foto removida. Clique em Salvar alterações.</span>';
 }
 
 function fmt(n){return Number(n||0).toLocaleString("pt-BR")}
