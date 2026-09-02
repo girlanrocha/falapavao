@@ -4,7 +4,7 @@ const INSTAGRAM_API_URL = "/api/instagram";
 const REGIONAL_API_URL = "/api/regional";
 const CONTENT_API_URL = "/api/content";
 
-const WHATSAPP_URL = ""; // depois coloque: https://wa.me/55DDDNUMERO
+const WHATSAPP_URL = "https://wa.me/5527996455909";
 
 const DEFAULT_CONTENT = {
   topAd: {
