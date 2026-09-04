@@ -3,6 +3,7 @@ const INSTAGRAM_PROFILE = "https://www.instagram.com/falapavao/";
 const INSTAGRAM_API_URL = "/api/instagram";
 const REGIONAL_API_URL = "/api/regional";
 const CONTENT_API_URL = "/api/content";
+const WEATHER_API_URL = "/api/weather";
 
 const WHATSAPP_URL = "https://wa.me/5527996455909";
 
@@ -25,6 +26,7 @@ const DEFAULT_CONTENT = {
 };
 
 let CONTENT = structuredClone(DEFAULT_CONTENT);
+let WEATHER = null;
 
 let ARTICLES = [
   {
@@ -216,6 +218,60 @@ function offerHtml(o){
   </button>`;
 }
 
+function weatherIcon(code=0,isDay=1){
+  if(code===0) return isDay ? "☀️" : "🌙";
+  if(code<=3) return "⛅";
+  if(code===45 || code===48) return "🌫️";
+  if(code>=51 && code<=67) return "🌧️";
+  if(code>=71 && code<=77) return "❄️";
+  if(code>=80 && code<=82) return "🌦️";
+  if(code>=95) return "⛈️";
+  return "🌤️";
+}
+
+function weatherLabel(code=0){
+  if(code===0) return "Céu limpo";
+  if(code===1) return "Predominantemente limpo";
+  if(code===2) return "Parcialmente nublado";
+  if(code===3) return "Nublado";
+  if(code===45 || code===48) return "Neblina";
+  if(code>=51 && code<=57) return "Garoa";
+  if(code>=61 && code<=67) return "Chuva";
+  if(code>=71 && code<=77) return "Neve";
+  if(code>=80 && code<=82) return "Pancadas de chuva";
+  if(code>=95) return "Trovoadas";
+  return "Tempo variável";
+}
+
+function shortDay(iso=""){
+  const d=new Date(`${iso}T12:00:00`);
+  if(Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("pt-BR",{weekday:"short"}).format(d).replace(".","");
+}
+
+function weatherHtml(){
+  if(!WEATHER){
+    return `<section class="weather-card weather-loading" aria-live="polite">
+      <span class="weather-main-icon">🌤️</span>
+      <div><strong>Tempo em Vila Pavão</strong><small>Carregando previsão...</small></div>
+    </section>`;
+  }
+  const current=WEATHER.current||{};
+  const days=(WEATHER.daily||[]).slice(0,3);
+  return `<section class="weather-card" aria-label="Previsão do tempo para Vila Pavão">
+    <div class="weather-now">
+      <span class="weather-main-icon">${weatherIcon(current.code,current.isDay)}</span>
+      <div class="weather-place"><strong>Tempo em Vila Pavão</strong><small>${weatherLabel(current.code)}</small></div>
+      <b class="weather-temp">${Math.round(Number(current.temperature)||0)}°</b>
+      <div class="weather-details"><span>💧 ${Math.round(Number(current.humidity)||0)}%</span><span>💨 ${Math.round(Number(current.wind)||0)} km/h</span></div>
+    </div>
+    <div class="weather-days">
+      ${days.map(d=>`<div><strong>${shortDay(d.date)}</strong><span>${weatherIcon(d.code,1)}</span><small>${Math.round(Number(d.min)||0)}° / <b>${Math.round(Number(d.max)||0)}°</b></small><em>Chuva ${Math.round(Number(d.rainChance)||0)}%</em></div>`).join("")}
+    </div>
+    <small class="weather-source">Previsão automática · Atualizada periodicamente</small>
+  </section>`;
+}
+
 function render(){
   const root=document.getElementById("app");
   if(!root) return;
@@ -253,6 +309,8 @@ function render(){
     </nav>
 
     <main>
+      <div id="weather-slot">${weatherHtml()}</div>
+
       <section class="section offers top-offers">
         <div class="section-head"><h2>◇ OFERTAS DO DIA</h2></div>
         <div class="offer-grid">${offers.map(offerHtml).join("")}</div>
@@ -359,8 +417,22 @@ async function loadContent(){
   }catch(e){ console.warn("Conteúdo administrativo indisponível",e); }
 }
 
+async function loadWeather(){
+  try{
+    const res=await fetch(`${WEATHER_API_URL}?t=${Date.now()}`,{cache:"no-store"});
+    if(!res.ok) throw new Error(`Weather API ${res.status}`);
+    WEATHER=await res.json();
+    const slot=document.getElementById("weather-slot");
+    if(slot) slot.innerHTML=weatherHtml();
+  }catch(e){
+    console.warn("Previsão do tempo indisponível",e);
+    const slot=document.getElementById("weather-slot");
+    if(slot) slot.innerHTML=`<section class="weather-card weather-loading"><span class="weather-main-icon">🌤️</span><div><strong>Tempo em Vila Pavão</strong><small>Previsão temporariamente indisponível</small></div></section>`;
+  }
+}
+
 render();
-Promise.allSettled([loadInstagram(),loadRegional(),loadContent()]).then(()=>{
+Promise.allSettled([loadInstagram(),loadRegional(),loadContent(),loadWeather()]).then(()=>{
   rebuildFeatures();
   render();
   startFeatureRotation();
@@ -368,6 +440,7 @@ Promise.allSettled([loadInstagram(),loadRegional(),loadContent()]).then(()=>{
 setInterval(loadInstagram,5*60*1000);
 setInterval(loadRegional,10*60*1000);
 setInterval(loadContent,5*60*1000);
+setInterval(loadWeather,15*60*1000);
 
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));
