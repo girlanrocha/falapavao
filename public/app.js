@@ -7,6 +7,9 @@ const WEATHER_API_URL = "/api/weather";
 
 const WHATSAPP_URL = "https://wa.me/5527996455909";
 
+// Rádio Fala Pavão — streaming público ShoutCast
+const RADIO_STREAM_URL = "https://sv16.hdradios.net:6776/stream";
+
 const DEFAULT_CONTENT = {
   topAd: {
     title: "ANUNCIE AQUI",
@@ -311,6 +314,12 @@ function render(){
     <main>
       <div id="weather-slot">${weatherHtml()}</div>
 
+      <section id="radio-fala-pavao" style="margin:12px 0;padding:14px 16px;border-radius:16px;background:#10233f;color:#fff;display:flex;align-items:center;gap:12px;box-shadow:0 6px 18px rgba(0,0,0,.14)">
+        <button id="radio-toggle" onclick="toggleRadio()" aria-label="Tocar Rádio Fala Pavão" style="width:48px;height:48px;border:0;border-radius:50%;font-size:22px;cursor:pointer">▶</button>
+        <div style="min-width:0;flex:1"><strong style="display:block;font-size:16px">📻 Rádio Fala Pavão</strong><small id="radio-status" style="opacity:.85">Clique para ouvir ao vivo</small></div>
+        <audio id="radio-audio" preload="none" src="${RADIO_STREAM_URL}"></audio>
+      </section>
+
       <section class="section offers top-offers">
         <div class="section-head"><h2>◇ OFERTAS DO DIA</h2></div>
         <div class="offer-grid">${offers.map(offerHtml).join("")}</div>
@@ -519,3 +528,45 @@ async function registrarAcesso(){
 }
 
 window.addEventListener("load", registrarAcesso);
+
+
+// =========================
+// RÁDIO FALA PAVÃO
+// =========================
+function getRadio(){ return document.getElementById("radio-audio"); }
+function updateRadioUi(playing){
+  const btn=document.getElementById("radio-toggle");
+  const status=document.getElementById("radio-status");
+  if(btn) btn.textContent=playing?"❚❚":"▶";
+  if(status) status.textContent=playing?"AO VIVO · tocando agora":"Clique para ouvir ao vivo";
+}
+async function playRadio(){
+  const audio=getRadio();
+  if(!audio) return;
+  try{
+    await audio.play();
+    updateRadioUi(true);
+  }catch(e){
+    updateRadioUi(false);
+    console.info("Autoplay da rádio bloqueado pelo navegador; aguardando interação do usuário.");
+  }
+}
+function toggleRadio(){
+  const audio=getRadio();
+  if(!audio) return;
+  if(audio.paused) playRadio();
+  else { audio.pause(); updateRadioUi(false); }
+}
+// Tenta iniciar automaticamente. Chrome/Safari podem bloquear áudio com som
+// até o primeiro clique/toque; nesse caso, a primeira interação inicia a rádio.
+window.addEventListener("load",()=>{
+  setTimeout(playRadio,800);
+  const unlock=()=>{
+    const audio=getRadio();
+    if(audio && audio.paused) playRadio();
+    document.removeEventListener("click",unlock);
+    document.removeEventListener("touchstart",unlock);
+  };
+  document.addEventListener("click",unlock,{once:true});
+  document.addEventListener("touchstart",unlock,{once:true,passive:true});
+});
