@@ -39,6 +39,42 @@ export default {
       }catch(e){return json({data:[],error:"Feed regional indisponível."},200)}
     }
 
+    if (url.pathname === "/api/weather") {
+      try{
+        const api=new URL("https://api.open-meteo.com/v1/forecast");
+        api.searchParams.set("latitude","-18.615");
+        api.searchParams.set("longitude","-40.610833");
+        api.searchParams.set("current","temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day");
+        api.searchParams.set("daily","weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max");
+        api.searchParams.set("timezone","America/Sao_Paulo");
+        api.searchParams.set("forecast_days","3");
+        const response=await fetch(api.toString(),{headers:{Accept:"application/json"},cf:{cacheTtl:900,cacheEverything:true}});
+        if(!response.ok) throw new Error(`Open-Meteo ${response.status}`);
+        const data=await response.json();
+        const daily=data.daily||{};
+        const days=(daily.time||[]).map((date,i)=>({
+          date,
+          code:Number(daily.weather_code?.[i]||0),
+          max:Number(daily.temperature_2m_max?.[i]||0),
+          min:Number(daily.temperature_2m_min?.[i]||0),
+          rainChance:Number(daily.precipitation_probability_max?.[i]||0)
+        }));
+        return json({
+          current:{
+            temperature:Number(data.current?.temperature_2m||0),
+            humidity:Number(data.current?.relative_humidity_2m||0),
+            code:Number(data.current?.weather_code||0),
+            wind:Number(data.current?.wind_speed_10m||0),
+            isDay:Number(data.current?.is_day??1)
+          },
+          daily:days,
+          updatedAt:data.current?.time||new Date().toISOString()
+        },200,{"Cache-Control":"public,max-age=900"});
+      }catch(e){
+        return json({error:"Previsão do tempo indisponível."},502);
+      }
+    }
+
     if (url.pathname === "/api/content" && request.method==="GET") {
       if (!env.CONTENT) return json({});
       const raw=await env.CONTENT.get("site-content");
