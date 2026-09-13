@@ -317,7 +317,6 @@ function render(){
       <section id="radio-fala-pavao" style="margin:12px 0;padding:14px 16px;border-radius:16px;background:#10233f;color:#fff;display:flex;align-items:center;gap:12px;box-shadow:0 6px 18px rgba(0,0,0,.14)">
         <button id="radio-toggle" onclick="toggleRadio()" aria-label="Tocar Rádio Fala Pavão" style="width:48px;height:48px;border:0;border-radius:50%;font-size:22px;cursor:pointer">▶</button>
         <div style="min-width:0;flex:1"><strong style="display:block;font-size:16px">📻 Rádio Fala Pavão</strong><small id="radio-status" style="opacity:.85">Clique para ouvir ao vivo</small></div>
-        <audio id="radio-audio" preload="none" src="${RADIO_STREAM_URL}"></audio>
       </section>
 
       <section class="section offers top-offers">
@@ -531,42 +530,97 @@ window.addEventListener("load", registrarAcesso);
 
 
 // =========================
-// RÁDIO FALA PAVÃO
+// RÁDIO FALA PAVÃO — PLAYER PERSISTENTE + RECONEXÃO AUTOMÁTICA
 // =========================
-function getRadio(){ return document.getElementById("radio-audio"); }
-function updateRadioUi(playing){
+// O áudio fica fora do HTML recriado por render(), evitando cortes nas atualizações.
+const RADIO_AUDIO = new Audio();
+RADIO_AUDIO.preload = "none";
+RADIO_AUDIO.src = RADIO_STREAM_URL;
+
+let radioWanted = false;
+let radioRetryTimer = null;
+let radioRetryCount = 0;
+let radioLastProgress = 0;
+
+function getRadio(){ return RADIO_AUDIO; }
+function updateRadioUi(playing,message=""){
   const btn=document.getElementById("radio-toggle");
   const status=document.getElementById("radio-status");
   if(btn) btn.textContent=playing?"❚❚":"▶";
-  if(status) status.textContent=playing?"AO VIVO · tocando agora":"Clique para ouvir ao vivo";
+  if(status) status.textContent=message || (playing?"AO VIVO · tocando agora":"Clique para ouvir ao vivo");
+}
+function clearRadioRetry(){
+  if(radioRetryTimer){ clearTimeout(radioRetryTimer); radioRetryTimer=null; }
+}
+function scheduleRadioReconnect(reason="Sinal interrompido"){
+  if(!radioWanted) return;
+  clearRadioRetry();
+  radioRetryCount++;
+  const delay=Math.min(1500+(radioRetryCount-1)*1500,8000);
+  updateRadioUi(false,reason+" · reconectando...");
+  radioRetryTimer=setTimeout(reconnectRadio,delay);
+}
+async function reconnectRadio(){
+  if(!radioWanted) return;
+  try{
+    RADIO_AUDIO.pause();
+    RADIO_AUDIO.src=RADIO_STREAM_URL+(RADIO_STREAM_URL.includes("?")?"&":"?")+"r="+Date.now();
+    RADIO_AUDIO.load();
+    await RADIO_AUDIO.play();
+    radioRetryCount=0;
+    updateRadioUi(true);
+  }catch(e){ scheduleRadioReconnect("Tentando sinal"); }
 }
 async function playRadio(){
-  const audio=getRadio();
-  if(!audio) return;
+  radioWanted=true;
+  clearRadioRetry();
+  updateRadioUi(false,"Conectando ao vivo...");
   try{
-    await audio.play();
+    await RADIO_AUDIO.play();
+    radioRetryCount=0;
     updateRadioUi(true);
   }catch(e){
-    updateRadioUi(false);
-    console.info("Autoplay da rádio bloqueado pelo navegador; aguardando interação do usuário.");
+    updateRadioUi(false,"Toque para ouvir ao vivo");
+    console.info("Rádio aguardando interação do navegador.",e);
   }
 }
-function toggleRadio(){
-  const audio=getRadio();
-  if(!audio) return;
-  if(audio.paused) playRadio();
-  else { audio.pause(); updateRadioUi(false); }
+function stopRadio(){
+  radioWanted=false;
+  clearRadioRetry();
+  RADIO_AUDIO.pause();
+  updateRadioUi(false);
 }
-// Tenta iniciar automaticamente. Chrome/Safari podem bloquear áudio com som
-// até o primeiro clique/toque; nesse caso, a primeira interação inicia a rádio.
+function toggleRadio(){
+  if(RADIO_AUDIO.paused) playRadio();
+  else stopRadio();
+}
+["error","stalled","abort"].forEach(evt=>RADIO_AUDIO.addEventListener(evt,()=>scheduleRadioReconnect("Sinal interrompido")));
+RADIO_AUDIO.addEventListener("waiting",()=>{ if(radioWanted) updateRadioUi(false,"Carregando sinal..."); });
+RADIO_AUDIO.addEventListener("playing",()=>{ radioRetryCount=0; radioLastProgress=Date.now(); updateRadioUi(true); });
+RADIO_AUDIO.addEventListener("timeupdate",()=>{ radioLastProgress=Date.now(); });
+RADIO_AUDIO.addEventListener("pause",()=>{ if(!radioWanted) updateRadioUi(false); });
+
+setInterval(()=>{
+  if(!radioWanted) return;
+  if(RADIO_AUDIO.paused){ scheduleRadioReconnect("Reconectando"); return; }
+  if(radioLastProgress && Date.now()-radioLastProgress>15000) scheduleRadioReconnect("Sinal travado");
+},5000);
+
 window.addEventListener("load",()=>{
   setTimeout(playRadio,800);
   const unlock=()=>{
-    const audio=getRadio();
-    if(audio && audio.paused) playRadio();
+    if(RADIO_AUDIO.paused) playRadio();
     document.removeEventListener("click",unlock);
     document.removeEventListener("touchstart",unlock);
   };
   document.addEventListener("click",unlock,{once:true});
   document.addEventListener("touchstart",unlock,{once:true,passive:true});
 });
+
+// render() pode atualizar toda a interface sem interromper RADIO_AUDIO.
+const renderBase = render;
+render = function(){
+  renderBase();
+  const playing=radioWanted && !RADIO_AUDIO.paused;
+  updateRadioUi(playing,radioWanted && RADIO_AUDIO.paused?"Reconectando ao vivo...":"");
+};
