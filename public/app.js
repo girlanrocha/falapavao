@@ -594,17 +594,17 @@ function toggleRadio(){
   if(RADIO_AUDIO.paused) playRadio();
   else stopRadio();
 }
-["error","stalled","abort"].forEach(evt=>RADIO_AUDIO.addEventListener(evt,()=>scheduleRadioReconnect("Sinal interrompido")));
+["error","stalled"].forEach(evt=>RADIO_AUDIO.addEventListener(evt,()=>scheduleRadioReconnect("Sinal interrompido")));
 RADIO_AUDIO.addEventListener("waiting",()=>{ if(radioWanted) updateRadioUi(false,"Carregando sinal..."); });
 RADIO_AUDIO.addEventListener("playing",()=>{ radioRetryCount=0; radioLastProgress=Date.now(); updateRadioUi(true); });
 RADIO_AUDIO.addEventListener("timeupdate",()=>{ radioLastProgress=Date.now(); });
 RADIO_AUDIO.addEventListener("pause",()=>{ if(!radioWanted) updateRadioUi(false); });
 
-setInterval(()=>{
-  if(!radioWanted) return;
-  if(RADIO_AUDIO.paused){ scheduleRadioReconnect("Reconectando"); return; }
-  if(radioLastProgress && Date.now()-radioLastProgress>15000) scheduleRadioReconnect("Sinal travado");
-},5000);
+// Reconecta somente quando houver uma falha real do elemento de áudio.
+// Não usamos mais watchdog por timeupdate: em streams ShoutCast ao vivo e em celulares,
+// esse evento pode ficar espaçado e causar reconexões falsas/pausas.
+RADIO_AUDIO.addEventListener("ended",()=>scheduleRadioReconnect("Sinal encerrado"));
+RADIO_AUDIO.addEventListener("emptied",()=>{ if(radioWanted) scheduleRadioReconnect("Sinal interrompido"); });
 
 window.addEventListener("load",()=>{
   setTimeout(playRadio,800);
